@@ -1,0 +1,26 @@
+{
+  "name": "nbank",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dennisjblake/nbank-js.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/dennisjblake/nbank-js/issues"
+  },
+  "homepage": "https://github.com/dennisjblake/nbank-js#readme",
+  "devDependencies": {
+    "axios": "^1.18.1",
+    "chai": "^6.2.2",
+    "mocha": "^11.3.0"
+  }
+}
