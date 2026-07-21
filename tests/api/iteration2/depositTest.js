@@ -1,9 +1,9 @@
-import axios from "axios";
-import { expect } from "chai";
+import axios from 'axios';
+import { expect } from 'chai';
 
-const baseUrl = "http://localhost:4111/api/v1";
+const baseUrl = 'http://localhost:4111/api/v1';
 
-describe("API Deposit Tests", () => {
+describe('API Deposit Tests', () => {
   const validAmounts = [
     { amount: 0.01 },
     { amount: 0.1 },
@@ -20,11 +20,11 @@ describe("API Deposit Tests", () => {
         `${baseUrl}/admin/users`,
         {
           username: randomName,
-          password: "Portal123!",
-          role: "USER",
+          password: 'Portal123!',
+          role: 'USER',
         },
         {
-          headers: { authorization: "Basic YWRtaW46YWRtaW4=" },
+          headers: { authorization: 'Basic YWRtaW46YWRtaW4=' },
         },
       );
       expect(createUserResponse.status).to.equal(201);
@@ -32,12 +32,12 @@ describe("API Deposit Tests", () => {
         `${baseUrl}/auth/login`,
         {
           username: randomName,
-          password: "Portal123!",
+          password: 'Portal123!',
         },
       );
       expect(generateUserTokenResponse.status).to.equal(200);
 
-      const userAuthToken = generateUserTokenResponse.headers["authorization"];
+      const userAuthToken = generateUserTokenResponse.headers['authorization'];
 
       // Create an account
 
@@ -50,8 +50,8 @@ describe("API Deposit Tests", () => {
       );
       expect(createAccountResponse.status).to.equal(201);
 
-      const accountId = createAccountResponse.data["id"];
-      const accountNumber = createAccountResponse.data["accountNumber"];
+      const accountId = createAccountResponse.data['id'];
+      const accountNumber = createAccountResponse.data['accountNumber'];
       // Deposit
 
       const depositResponse = await axios.post(
@@ -65,14 +65,14 @@ describe("API Deposit Tests", () => {
         },
       );
       expect(depositResponse.status).equals(200);
-      expect(depositResponse.data["balance"]).equal(amount);
-      expect(depositResponse.data["id"]).equal(accountId);
-      expect(depositResponse.data["accountNumber"]).equal(accountNumber);
-      expect(depositResponse.data["transactions"][0].amount).equal(amount);
-      expect(depositResponse.data["transactions"][0].relatedAccountId).equal(
+      expect(depositResponse.data['balance']).equal(amount);
+      expect(depositResponse.data['id']).equal(accountId);
+      expect(depositResponse.data['accountNumber']).equal(accountNumber);
+      expect(depositResponse.data['transactions'][0].amount).equal(amount);
+      expect(depositResponse.data['transactions'][0].relatedAccountId).equal(
         accountId,
       );
-      expect(depositResponse.data["transactions"][0].type).equal("DEPOSIT");
+      expect(depositResponse.data['transactions'][0].type).equal('DEPOSIT');
       // verify account information
       const customerAccountsResponse = await axios.get(
         `${baseUrl}/customer/accounts`,
@@ -83,7 +83,6 @@ describe("API Deposit Tests", () => {
       expect(customerAccountsResponse.status).equals(200);
       expect(customerAccountsResponse.data[0].balance).equal(amount);
       expect(customerAccountsResponse.data[0].id).equal(accountId);
-      expect(customerAccountsResponse.data[0].balance).equal(amount);
       expect(customerAccountsResponse.data[0].accountNumber).equal(
         accountNumber,
       );
@@ -94,15 +93,15 @@ describe("API Deposit Tests", () => {
         customerAccountsResponse.data[0].transactions[0].relatedAccountId,
       ).equal(accountId);
       expect(customerAccountsResponse.data[0].transactions[0].type).equal(
-        "DEPOSIT",
+        'DEPOSIT',
       );
     });
   });
   const invalidAmounts = [
-    { amount: 0, errorMessage: "Deposit amount must be at least 0.01" },
-    { amount: -1, errorMessage: "Deposit amount must be at least 0.01" },
-    { amount: 5001, errorMessage: "Deposit amount cannot exceed 5000" },
-    { amount: 5000.1, errorMessage: "Deposit amount cannot exceed 5000" },
+    { amount: 0, errorMessage: 'Deposit amount must be at least 0.01' },
+    { amount: -1, errorMessage: 'Deposit amount must be at least 0.01' },
+    { amount: 5001, errorMessage: 'Deposit amount cannot exceed 5000' },
+    { amount: 5000.1, errorMessage: 'Deposit amount cannot exceed 5000' },
   ];
   invalidAmounts.forEach(({ amount, errorMessage }) => {
     it(`user cannot deposit incorrect amount "${amount}" into his account`, async () => {
@@ -112,11 +111,11 @@ describe("API Deposit Tests", () => {
         `${baseUrl}/admin/users`,
         {
           username: randomName,
-          password: "Portal123!",
-          role: "USER",
+          password: 'Portal123!',
+          role: 'USER',
         },
         {
-          headers: { authorization: "Basic YWRtaW46YWRtaW4=" },
+          headers: { authorization: 'Basic YWRtaW46YWRtaW4=' },
         },
       );
       expect(createUserResponse.status).to.equal(201);
@@ -124,12 +123,12 @@ describe("API Deposit Tests", () => {
         `${baseUrl}/auth/login`,
         {
           username: randomName,
-          password: "Portal123!",
+          password: 'Portal123!',
         },
       );
       expect(generateUserTokenResponse.status).to.equal(200);
 
-      const userAuthToken = generateUserTokenResponse.headers["authorization"];
+      const userAuthToken = generateUserTokenResponse.headers['authorization'];
 
       // Create an account
 
@@ -142,8 +141,8 @@ describe("API Deposit Tests", () => {
       );
       expect(createAccountResponse.status).to.equal(201);
 
-      const accountId = createAccountResponse.data["id"];
-      const accountNumber = createAccountResponse.data["accountNumber"];
+      const accountId = createAccountResponse.data['id'];
+      const accountNumber = createAccountResponse.data['accountNumber'];
       // Deposit
 
       const depositResponse = await axios.post(
@@ -172,8 +171,8 @@ describe("API Deposit Tests", () => {
     });
   });
   const invalidAccounts = [
-    { account: 0, errorMessage: "Unauthorized access to account" },
-    { account: -1, errorMessage: "Unauthorized access to account" },
+    { account: 0, errorMessage: 'Unauthorized access to account' },
+    { account: -1, errorMessage: 'Unauthorized access to account' },
   ];
   invalidAccounts.forEach(({ account, errorMessage }) => {
     it(`user cannot deposit correct amount into non owned account "${account}" into his account`, async () => {
@@ -183,11 +182,11 @@ describe("API Deposit Tests", () => {
         `${baseUrl}/admin/users`,
         {
           username: randomName,
-          password: "Portal123!",
-          role: "USER",
+          password: 'Portal123!',
+          role: 'USER',
         },
         {
-          headers: { authorization: "Basic YWRtaW46YWRtaW4=" },
+          headers: { authorization: 'Basic YWRtaW46YWRtaW4=' },
         },
       );
       expect(createUserResponse.status).to.equal(201);
@@ -195,12 +194,12 @@ describe("API Deposit Tests", () => {
         `${baseUrl}/auth/login`,
         {
           username: randomName,
-          password: "Portal123!",
+          password: 'Portal123!',
         },
       );
       expect(generateUserTokenResponse.status).to.equal(200);
 
-      const userAuthToken = generateUserTokenResponse.headers["authorization"];
+      const userAuthToken = generateUserTokenResponse.headers['authorization'];
 
       // Deposit
 
@@ -219,18 +218,18 @@ describe("API Deposit Tests", () => {
       expect(depositResponse.data).equal(errorMessage);
     });
   });
-  it("admin cannot deposit correct amount into customer account", async () => {
+  it('admin cannot deposit correct amount into customer account', async () => {
     const randomName = Math.random().toString(36).substring(2, 12);
     // creating a new user
     const createUserResponse = await axios.post(
       `${baseUrl}/admin/users`,
       {
         username: randomName,
-        password: "Portal123!",
-        role: "USER",
+        password: 'Portal123!',
+        role: 'USER',
       },
       {
-        headers: { authorization: "Basic YWRtaW46YWRtaW4=" },
+        headers: { authorization: 'Basic YWRtaW46YWRtaW4=' },
       },
     );
     expect(createUserResponse.status).to.equal(201);
@@ -238,12 +237,12 @@ describe("API Deposit Tests", () => {
       `${baseUrl}/auth/login`,
       {
         username: randomName,
-        password: "Portal123!",
+        password: 'Portal123!',
       },
     );
     expect(generateUserTokenResponse.status).to.equal(200);
 
-    const userAuthToken = generateUserTokenResponse.headers["authorization"];
+    const userAuthToken = generateUserTokenResponse.headers['authorization'];
 
     // Create an account
 
@@ -256,8 +255,8 @@ describe("API Deposit Tests", () => {
     );
     expect(createAccountResponse.status).to.equal(201);
 
-    const accountId = createAccountResponse.data["id"];
-    const accountNumber = createAccountResponse.data["accountNumber"];
+    const accountId = createAccountResponse.data['id'];
+    const accountNumber = createAccountResponse.data['accountNumber'];
 
     // deposit
     const depositResponse = await axios.post(
@@ -267,7 +266,7 @@ describe("API Deposit Tests", () => {
         balance: 100.0,
       },
       {
-        headers: { authorization: "Basic YWRtaW46YWRtaW4=" },
+        headers: { authorization: 'Basic YWRtaW46YWRtaW4=' },
         validateStatus: () => true,
       },
     );
