@@ -1,0 +1,10 @@
+{
+  "CreateUserRequest": {
+    "target": "CreateUserRequest",
+    "fields": ["username", "role"]
+  },
+  "CreateUserResponse": {
+    "target": "CreateUserResponse",
+    "fields": ["username", "role"]
+  }
+}
