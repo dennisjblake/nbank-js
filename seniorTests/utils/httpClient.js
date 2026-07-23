@@ -1,4 +1,7 @@
 import axios from 'axios';
+import { config } from 'dotenv';
+
+config();
 
 const backEndUrl = process.env.BACKEND_URL;
 
@@ -40,9 +43,10 @@ export default class HttpClient {
       return this.client.put(url, data, config);
     } catch (error) {
       if (error.response) {
-        throw new Error(
-          `Request failed with status code: ${error.response.status}`,
-        );
+        throw {
+          message: `Request failed with status code: ${error.response.status}`,
+          response: error.response,
+        };
       }
       throw error;
     }

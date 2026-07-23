@@ -1,4 +1,4 @@
-import CreateAccountResponse from '../models/createAccountResponse';
+import CreateAccountResponse from '../models/createAccountResponse.js';
 import CreateUserRequest from '../models/createUserRequest.js';
 import CreateUserResponse from '../models/createUserResponse.js';
 import LoginUserRequest from '../models/loginUserRequest.js';
@@ -16,7 +16,7 @@ const endpoints = {
     url: '/admin/users',
     method: 'post',
     requestModel: CreateUserRequest,
-    responseModel: CreateAccountResponse,
+    responseModel: CreateUserResponse,
   },
   [ENDPOINT_KEY.LOGIN]: {
     url: '/auth/login',
@@ -31,3 +31,5 @@ const endpoints = {
     responseModel: CreateAccountResponse,
   },
 };
+
+export default endpoints;

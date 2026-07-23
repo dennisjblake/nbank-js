@@ -7,7 +7,7 @@ export default class Requester {
     this.httpClient = new HttpClient();
   }
 
-  async request(endpointKey, { data = null, consif = {} } = {}) {
+  async request(endpointKey, { data = null, config = {} } = {}) {
     const endpoint = endpoints[endpointKey];
     if (!endpoint) {
       throw new Error(`Endpoint ${endpointKey} not found`);
@@ -15,6 +15,7 @@ export default class Requester {
 
     const { url, method = 'post', responseModel } = endpoint;
     const requestData = data?.toJson ? data.toJson() : data;
+    const httpMethod = method.toLowerCase();
 
     try {
       let response;
@@ -36,12 +37,12 @@ export default class Requester {
         status: response.status,
         headers: response.headers,
       };
-    } catch (e) {
+    } catch (error) {
       throw error;
     }
   }
 
-  instantiateModel(ModelClass, data) {
+  #instantiateModel(ModelClass, data) {
     if (typeof ModelClass.fromJson === 'function') {
       return ModelClass.fromJson(data);
     }
