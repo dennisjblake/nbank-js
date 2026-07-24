@@ -5,9 +5,7 @@ import { UserSteps } from '../../utils/steps/userSteps.js';
 
 describe('Accounts Service Tests', function () {
   it('user should be able to create an account', async function () {
-    const { requestData } = await AdminSteps.createUser();
-    const { status: loginStatus, token } = await UserSteps.login(requestData);
-    expect(loginStatus).to.equal(HTTP_STATUS.OK);
+    const { token } = await AdminSteps.createUserAndLogin();
 
     // Account creation
     const { responseData: accountCreateData, status: accountCreateStatus } =

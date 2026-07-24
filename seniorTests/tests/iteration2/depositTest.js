@@ -19,9 +19,7 @@ describe('API Deposit Tests', () => {
   validAmounts.forEach(({ amount }) => {
     it(`user can deposit correct amount "${amount}" into his account`, async () => {
       // create a user
-      const { requestData } = await AdminSteps.createUser();
-      const { status: loginStatus, token } = await UserSteps.login(requestData);
-      expect(loginStatus).to.equal(HTTP_STATUS.OK);
+      const { token } = await AdminSteps.createUserAndLogin();
 
       // Create an account
       const { responseData: accountCreateData, status: accountCreateStatus } =
@@ -58,9 +56,7 @@ describe('API Deposit Tests', () => {
   invalidAmounts.forEach(({ amount, errorMessage }) => {
     it(`user cannot deposit incorrect amount "${amount}" into his account`, async () => {
       // create a user
-      const { requestData } = await AdminSteps.createUser();
-      const { status: loginStatus, token } = await UserSteps.login(requestData);
-      expect(loginStatus).to.equal(HTTP_STATUS.OK);
+      const { token } = await AdminSteps.createUserAndLogin();
 
       // Create an account
       const { responseData: accountCreateData, status: accountCreateStatus } =
@@ -96,9 +92,7 @@ describe('API Deposit Tests', () => {
     it(`user cannot deposit correct amount into non owned account "${account}" into his account`, async () => {
       const amount = randomDepositAmountWithDecimals();
       // create a user
-      const { requestData } = await AdminSteps.createUser();
-      const { status: loginStatus, token } = await UserSteps.login(requestData);
-      expect(loginStatus).to.equal(HTTP_STATUS.OK);
+      const { token } = await AdminSteps.createUserAndLogin();
 
       // Create an account
       const { responseData: accountCreateData, status: accountCreateStatus } =
@@ -120,9 +114,7 @@ describe('API Deposit Tests', () => {
   it('admin cannot deposit correct amount into customer account', async () => {
     const amount = randomDepositAmountWithDecimals();
     // create a user
-    const { requestData } = await AdminSteps.createUser();
-    const { status: loginStatus, token } = await UserSteps.login(requestData);
-    expect(loginStatus).to.equal(HTTP_STATUS.OK);
+    const { token } = await AdminSteps.createUserAndLogin();
 
     // Create an account
     const { responseData: accountCreateData, status: accountCreateStatus } =

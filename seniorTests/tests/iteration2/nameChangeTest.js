@@ -15,9 +15,8 @@ describe('API Name Change Tests', function () {
   validData.forEach(({ name }) => {
     it(`user can change name to correct value "${name}"`, async () => {
       // create user
-      const { requestData } = await AdminSteps.createUser();
-      const { status: loginStatus, token } = await UserSteps.login(requestData);
-      expect(loginStatus).to.equal(HTTP_STATUS.OK);
+      const { token, requestData, responseData } =
+        await AdminSteps.createUserAndLogin();
 
       // change name
       const { data, status } = await UserSteps.changeProfileName(name, token);
@@ -58,9 +57,8 @@ describe('API Name Change Tests', function () {
   invalidData.forEach(({ name }) => {
     it(`user cannot change name to incorrect value "${name}"`, async () => {
       // create user
-      const { requestData } = await AdminSteps.createUser();
-      const { status: loginStatus, token } = await UserSteps.login(requestData);
-      expect(loginStatus).to.equal(HTTP_STATUS.OK);
+      const { token, requestData, responseData } =
+        await AdminSteps.createUserAndLogin();
 
       // change name - expect error
       await UserSteps.changeProfileNameWithError(

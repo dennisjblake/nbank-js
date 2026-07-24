@@ -19,9 +19,7 @@ describe('API Transfer Tests', () => {
   validAmounts.forEach(({ amount }) => {
     it(`user can transfer correct amount ${amount} from his account into his account`, async () => {
       // create a user
-      const { requestData } = await AdminSteps.createUser();
-      const { status: loginStatus, token } = await UserSteps.login(requestData);
-      expect(loginStatus).to.equal(HTTP_STATUS.OK);
+      const { token } = await AdminSteps.createUserAndLogin();
 
       // Create account 1
       const { responseData: account1CreateData, status: account1CreateStatus } =
@@ -99,10 +97,7 @@ describe('API Transfer Tests', () => {
   validAmounts.forEach(({ amount }) => {
     it(`user can transfer correct amount ${amount} from his account into other customer account`, async () => {
       // create user 1
-      const { requestData: requestDataUser1 } = await AdminSteps.createUser();
-      const { status: loginStatusUser1, token: authTokenUser1 } =
-        await UserSteps.login(requestDataUser1);
-      expect(loginStatusUser1).to.equal(HTTP_STATUS.OK);
+      const { token: authTokenUser1 } = await AdminSteps.createUserAndLogin();
 
       // create account 1 for user 1
       const {
@@ -114,10 +109,7 @@ describe('API Transfer Tests', () => {
       expect(createAccount1User1Response.accountNumber).to.exist;
 
       // create user 2
-      const { requestData: requestDataUser2 } = await AdminSteps.createUser();
-      const { status: loginStatusUser2, token: authTokenUser2 } =
-        await UserSteps.login(requestDataUser2);
-      expect(loginStatusUser2).to.equal(HTTP_STATUS.OK);
+      const { token: authTokenUser2 } = await AdminSteps.createUserAndLogin();
 
       // create account 1 for user 2
       const {
@@ -210,9 +202,7 @@ describe('API Transfer Tests', () => {
   invalidAmounts.forEach(({ amount, errorMessage }) => {
     it(`user cannot transfer invalid amount ${amount} from his account into his account`, async () => {
       // create a user
-      const { requestData } = await AdminSteps.createUser();
-      const { status: loginStatus, token } = await UserSteps.login(requestData);
-      expect(loginStatus).to.equal(HTTP_STATUS.OK);
+      const { token } = await AdminSteps.createUserAndLogin();
 
       // Create account 1
       const { responseData: account1CreateData, status: account1CreateStatus } =
@@ -286,9 +276,7 @@ describe('API Transfer Tests', () => {
       ACCOUNT_VALUE.VALUE_5K,
     );
     // create a user
-    const { requestData } = await AdminSteps.createUser();
-    const { status: loginStatus, token } = await UserSteps.login(requestData);
-    expect(loginStatus).to.equal(HTTP_STATUS.OK);
+    const { token } = await AdminSteps.createUserAndLogin();
 
     // Create account 1
     const { responseData: account1CreateData, status: account1CreateStatus } =
@@ -338,22 +326,13 @@ describe('API Transfer Tests', () => {
       ACCOUNT_VALUE.VALUE_5K,
     );
     // create user 1
-    const { requestData: requestDataUser1 } = await AdminSteps.createUser();
-    const { status: loginStatusUser1, token: authTokenUser1 } =
-      await UserSteps.login(requestDataUser1);
-    expect(loginStatusUser1).to.equal(HTTP_STATUS.OK);
+    const { token: authTokenUser1 } = await AdminSteps.createUserAndLogin();
 
     // create user 2
-    const { requestData: requestDataUser2 } = await AdminSteps.createUser();
-    const { status: loginStatusUser2, token: authTokenUser2 } =
-      await UserSteps.login(requestDataUser2);
-    expect(loginStatusUser2).to.equal(HTTP_STATUS.OK);
+    const { token: authTokenUser2 } = await AdminSteps.createUserAndLogin();
 
     // create user 3
-    const { requestData: requestDataUser3 } = await AdminSteps.createUser();
-    const { status: loginStatusUser3, token: authTokenUser3 } =
-      await UserSteps.login(requestDataUser3);
-    expect(loginStatusUser3).to.equal(HTTP_STATUS.OK);
+    const { token: authTokenUser3 } = await AdminSteps.createUserAndLogin();
 
     // create account 1 for user 2
     const {
@@ -426,16 +405,10 @@ describe('API Transfer Tests', () => {
       ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
     );
     // create user 1
-    const { requestData: requestDataUser1 } = await AdminSteps.createUser();
-    const { status: loginStatusUser1, token: authTokenUser1 } =
-      await UserSteps.login(requestDataUser1);
-    expect(loginStatusUser1).to.equal(HTTP_STATUS.OK);
+    const { token: authTokenUser1 } = await AdminSteps.createUserAndLogin();
 
     // create user 2
-    const { requestData: requestDataUser2 } = await AdminSteps.createUser();
-    const { status: loginStatusUser2, token: authTokenUser2 } =
-      await UserSteps.login(requestDataUser2);
-    expect(loginStatusUser2).to.equal(HTTP_STATUS.OK);
+    const { token: authTokenUser2 } = await AdminSteps.createUserAndLogin();
 
     // create account 1 for user 1
     const {
@@ -511,9 +484,7 @@ describe('API Transfer Tests', () => {
       ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
     );
     // create a user
-    const { requestData } = await AdminSteps.createUser();
-    const { status: loginStatus, token } = await UserSteps.login(requestData);
-    expect(loginStatus).to.equal(HTTP_STATUS.OK);
+    const { token } = await AdminSteps.createUserAndLogin();
 
     // Create an account 1
     const { responseData: account1CreateData, status: account1CreateStatus } =
