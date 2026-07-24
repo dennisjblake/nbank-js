@@ -43,6 +43,15 @@ export default class Requester {
   }
 
   #instantiateModel(ModelClass, data) {
+    if (Array.isArray(data)) {
+      return data.map((item) => {
+        if (typeof ModelClass.fromJson === 'function') {
+          return ModelClass.fromJson(item);
+        }
+        return new ModelClass(item);
+      });
+    }
+
     if (typeof ModelClass.fromJson === 'function') {
       return ModelClass.fromJson(data);
     }

@@ -1,12 +1,14 @@
 import { expect } from 'chai';
-import { AdminSteps } from '../../utils/steps/adminSteps.js';
 import { assertThatModels } from '../../models/comparison/modelAssertions.js';
-import ApiConfig from '../../utils/apiConfig.js';
 import CreateUserRequest from '../../models/createUserRequest.js';
-import { ENDPOINT_KEY } from '../../utils/endpoints.js';
-import HTTP_STATUS from '../../utils/httpStatus.js';
-import ErrorHandlingRequester from '../../utils/errorHandlingRequester.js';
 import ExpectedError from '../../models/expectedError.js';
+import ApiConfig from '../../utils/apiConfig.js';
+import { ENDPOINT_KEY } from '../../utils/endpoints.js';
+import ErrorHandlingRequester from '../../utils/errorHandlingRequester.js';
+import HTTP_STATUS from '../../utils/httpStatus.js';
+import MESSAGE from '../../utils/message.js';
+import ROLE from '../../utils/roles.js';
+import { AdminSteps } from '../../utils/steps/adminSteps.js';
 
 describe('Admin Service Tests', function () {
   it('admin should be able to create a user', async () => {
@@ -21,32 +23,30 @@ describe('Admin Service Tests', function () {
     {
       username: '',
       password: 'password123!',
-      role: 'USER',
+      role: ROLE.USER,
       errorKey: 'username',
-      errorMessage: 'Username cannot be blank',
+      errorMessage: MESSAGE.USERNAME_BLANK,
     },
     {
       username: 'ab',
       password: 'password123!',
-      role: 'USER',
+      role: ROLE.USER,
       errorKey: 'username',
-      errorMessage: 'Username must be between 3 and 15 characters',
+      errorMessage: MESSAGE.USERNAME_BETWEEN_3_15,
     },
     {
       username: 'abc$',
       password: 'password123!',
-      role: 'USER',
+      role: ROLE.USER,
       errorKey: 'username',
-      errorMessage:
-        'Username must contain only letters, digits, dashes, underscores, and dots',
+      errorMessage: MESSAGE.USERNAME_LETTERS_DIGITS_DASHES,
     },
     {
       username: 'abc%',
       password: 'password123!',
-      role: 'USER',
+      role: ROLE.USER,
       errorKey: 'username',
-      errorMessage:
-        'Username must contain only letters, digits, dashes, underscores, and dots',
+      errorMessage: MESSAGE.USERNAME_LETTERS_DIGITS_DASHES,
     },
   ];
   invalidData.forEach(
