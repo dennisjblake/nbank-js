@@ -1,5 +1,6 @@
 import AdminCreateUserRequest from '../../requests/adminCreateUserRequest.js';
 import { expect } from 'chai';
+import { HttpStatusCode } from 'axios';
 
 describe('Admin Service Tests', function () {
   it('admin should be able to create a user', async () => {
@@ -7,7 +8,7 @@ describe('Admin Service Tests', function () {
     const { sentData, response, status } =
       await adminCreateUserRequest.createUser('USER');
 
-    expect(status).to.equal(201);
+    expect(status).to.equal(HttpStatusCode.Created);
     expect(response.username).to.equal(sentData.username);
     expect(response.role).to.equal(sentData.role);
   });
@@ -44,7 +45,7 @@ describe('Admin Service Tests', function () {
             username: username,
           });
 
-        expect(status).to.equal(400);
+        expect(status).to.equal(HttpStatusCode.BadRequest);
         expect(response[errorKey]).to.contain(errorMessage);
       });
     },

@@ -3,6 +3,7 @@ import AdminCreateUserRequest from '../../requests/adminCreateUserRequest.js';
 import GenerateTokenRequest from '../../requests/generateTokenRequest.js';
 import NameChangeRequester from '../../requests/nameChangeRequester.js';
 import CustomerProfileRequest from '../../requests/customerProfileRequest.js';
+import { HttpStatusCode } from 'axios';
 
 describe('API Name Change Tests', function () {
   const validData = [
@@ -14,7 +15,7 @@ describe('API Name Change Tests', function () {
   validData.forEach(({ name }) => {
     it(`user can change name to correct value "${name}"`, async () => {
       const user = await new AdminCreateUserRequest().createUser();
-      expect(user.status).to.equal(201);
+      expect(user.status).to.equal(HttpStatusCode.Created);
       const loginRequest = await new GenerateTokenRequest().login({
         username: user.response.username,
         password: user.response.password,
@@ -24,7 +25,7 @@ describe('API Name Change Tests', function () {
 
       const { status: changeNameStatus, responseData: changeNameResponse } =
         await new NameChangeRequester().changeName(name, authToken);
-      expect(changeNameStatus).to.equal(200);
+      expect(changeNameStatus).to.equal(HttpStatusCode.Ok);
       expect(changeNameResponse.message).to.equal(
         'Profile updated successfully',
       );
@@ -38,7 +39,7 @@ describe('API Name Change Tests', function () {
         status: customerProfileStatus,
         responseData: customerProfileResponse,
       } = await new CustomerProfileRequest().getProfileInfo(authToken);
-      expect(customerProfileStatus).to.equal(200);
+      expect(customerProfileStatus).to.equal(HttpStatusCode.Ok);
       expect(customerProfileResponse.name).to.equal(name);
       expect(customerProfileResponse.username).to.equal(user.response.username);
       expect(customerProfileResponse.role).to.equal('USER');
@@ -65,7 +66,7 @@ describe('API Name Change Tests', function () {
     it(`user can change name to inccorrect value "${name}"`, async () => {
       const user = await new AdminCreateUserRequest().createUser();
 
-      expect(user.status).to.equal(201);
+      expect(user.status).to.equal(HttpStatusCode.Created);
       const loginRequest = await new GenerateTokenRequest().login({
         username: user.response.username,
         password: user.response.password,
@@ -75,7 +76,7 @@ describe('API Name Change Tests', function () {
 
       const { status: changeNameStatus, responseData: changeNameResponse } =
         await new NameChangeRequester().changeName(name, authToken);
-      expect(changeNameStatus).to.equal(400);
+      expect(changeNameStatus).to.equal(HttpStatusCode.BadRequest);
       expect(changeNameResponse).to.equal(
         'Name must contain two words with letters only',
       );
@@ -84,7 +85,7 @@ describe('API Name Change Tests', function () {
         status: customerProfileStatus,
         responseData: customerProfileResponse,
       } = await new CustomerProfileRequest().getProfileInfo(authToken);
-      expect(customerProfileStatus).to.equal(200);
+      expect(customerProfileStatus).to.equal(HttpStatusCode.Ok);
       expect(customerProfileResponse.name).to.equal(null);
       expect(customerProfileResponse.username).to.equal(user.response.username);
       expect(customerProfileResponse.role).to.equal('USER');

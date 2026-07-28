@@ -7,6 +7,7 @@ import CustomerAccountsResponse from '../../models/customerAccountsResponse.js';
 import CustomerAccountsRequester from '../../requests/customerAccountsRequester.js';
 import ApiConfig from '../../utils/apiConfig.js';
 import TransferRequester from '../../requests/transferRequester.js';
+import { HttpStatusCode } from 'axios';
 
 describe('API Transfer Tests', () => {
   const validAmounts = [
@@ -21,7 +22,7 @@ describe('API Transfer Tests', () => {
     it(`user can transfer correct amount ${amount} from his account into his account`, async () => {
       // create a user
       const user = await new AdminCreateUserRequest().createUser();
-      expect(user.status).to.equal(201);
+      expect(user.status).to.equal(HttpStatusCode.Created);
       const loginRequest = await new GenerateTokenRequest().login({
         username: user.response.username,
         password: user.response.password,
@@ -34,7 +35,7 @@ describe('API Transfer Tests', () => {
         responseData: createAccount1Response,
       } = await new CreateAccountRequest().createAccount(authToken);
 
-      expect(createAccount1Status).to.equal(201);
+      expect(createAccount1Status).to.equal(HttpStatusCode.Created);
       expect(createAccount1Response.accountNumber).to.be.a('string').and.not
         .empty;
 
@@ -44,7 +45,7 @@ describe('API Transfer Tests', () => {
         responseData: createAccount2Response,
       } = await new CreateAccountRequest().createAccount(authToken);
 
-      expect(createAccount2Status).to.equal(201);
+      expect(createAccount2Status).to.equal(HttpStatusCode.Created);
       expect(createAccount2Response.accountNumber).to.be.a('string').and.not
         .empty;
 
@@ -61,7 +62,7 @@ describe('API Transfer Tests', () => {
           authToken,
         );
 
-      expect(depositStatus).equals(200);
+      expect(depositStatus).equals(HttpStatusCode.Ok);
       expect(depositResponse.balance).equal(10000.0);
       expect(depositResponse.id).equal(createAccount1Response.id);
       expect(depositResponse.accountNumber).equal(
@@ -119,7 +120,7 @@ describe('API Transfer Tests', () => {
     it(`user can transfer correct amount ${amount} from his account into other customer account`, async () => {
       // create user 1
       const user1 = await new AdminCreateUserRequest().createUser();
-      expect(user1.status).to.equal(201);
+      expect(user1.status).to.equal(HttpStatusCode.Created);
       const loginRequestUser1 = await new GenerateTokenRequest().login({
         username: user1.response.username,
         password: user1.response.password,
@@ -133,13 +134,13 @@ describe('API Transfer Tests', () => {
         responseData: createAccount1User1Response,
       } = await new CreateAccountRequest().createAccount(authTokenUser1);
 
-      expect(createAccount1User1Status).to.equal(201);
+      expect(createAccount1User1Status).to.equal(HttpStatusCode.Created);
       expect(createAccount1User1Response.accountNumber).to.be.a('string').and
         .not.empty;
 
       // create user 2
       const user2 = await new AdminCreateUserRequest().createUser();
-      expect(user2.status).to.equal(201);
+      expect(user2.status).to.equal(HttpStatusCode.Created);
       const loginRequestUser2 = await new GenerateTokenRequest().login({
         username: user2.response.username,
         password: user2.response.password,
@@ -153,7 +154,7 @@ describe('API Transfer Tests', () => {
         responseData: createAccount1User2Response,
       } = await new CreateAccountRequest().createAccount(authTokenUser2);
 
-      expect(createAccount1User2Status).to.equal(201);
+      expect(createAccount1User2Status).to.equal(HttpStatusCode.Created);
       expect(createAccount1User2Response.accountNumber).to.be.a('string').and
         .not.empty;
 
@@ -170,7 +171,7 @@ describe('API Transfer Tests', () => {
           authTokenUser1,
         );
 
-      expect(depositStatus).equals(200);
+      expect(depositStatus).equals(HttpStatusCode.Ok);
       expect(depositResponse.balance).equal(10000.0);
       expect(depositResponse.id).equal(createAccount1User1Response.id);
       expect(depositResponse.accountNumber).equal(
@@ -186,7 +187,7 @@ describe('API Transfer Tests', () => {
           authTokenUser1,
         );
 
-      expect(transferStatus).equal(200);
+      expect(transferStatus).equal(HttpStatusCode.Ok);
       expect(transferResponse.senderAccountId).equal(
         createAccount1User1Response.id,
       );
@@ -242,7 +243,7 @@ describe('API Transfer Tests', () => {
     it(`user cannot transfer invalid amount ${amount} from his account into his account`, async () => {
       // create a user
       const user = await new AdminCreateUserRequest().createUser();
-      expect(user.status).to.equal(201);
+      expect(user.status).to.equal(HttpStatusCode.Created);
       const loginRequest = await new GenerateTokenRequest().login({
         username: user.response.username,
         password: user.response.password,
@@ -254,7 +255,7 @@ describe('API Transfer Tests', () => {
         responseData: createAccount1Response,
       } = await new CreateAccountRequest().createAccount(authToken);
 
-      expect(createAccount1Status).to.equal(201);
+      expect(createAccount1Status).to.equal(HttpStatusCode.Created);
       expect(createAccount1Response.accountNumber).to.be.a('string').and.not
         .empty;
 
@@ -264,7 +265,7 @@ describe('API Transfer Tests', () => {
         responseData: createAccount2Response,
       } = await new CreateAccountRequest().createAccount(authToken);
 
-      expect(createAccount2Status).to.equal(201);
+      expect(createAccount2Status).to.equal(HttpStatusCode.Created);
       expect(createAccount2Response.accountNumber).to.be.a('string').and.not
         .empty;
 
@@ -286,7 +287,7 @@ describe('API Transfer Tests', () => {
           authToken,
         );
 
-      expect(depositStatus).equals(200);
+      expect(depositStatus).equals(HttpStatusCode.Ok);
       expect(depositResponse.balance).equal(15000.0);
       expect(depositResponse.id).equal(createAccount1Response.id);
       expect(depositResponse.accountNumber).equal(
@@ -301,7 +302,7 @@ describe('API Transfer Tests', () => {
           amount,
           authToken,
         );
-      expect(transferStatus).equals(400);
+      expect(transferStatus).equals(HttpStatusCode.BadRequest);
       expect(transferResponse).equal(errorMessage);
 
       // verify account information
@@ -338,7 +339,7 @@ describe('API Transfer Tests', () => {
   it('user cannot transfer with leaving negative balance', async () => {
     // create a user
     const user = await new AdminCreateUserRequest().createUser();
-    expect(user.status).to.equal(201);
+    expect(user.status).to.equal(HttpStatusCode.Created);
     const loginRequest = await new GenerateTokenRequest().login({
       username: user.response.username,
       password: user.response.password,
@@ -350,7 +351,7 @@ describe('API Transfer Tests', () => {
       responseData: createAccount1Response,
     } = await new CreateAccountRequest().createAccount(authToken);
 
-    expect(createAccount1Status).to.equal(201);
+    expect(createAccount1Status).to.equal(HttpStatusCode.Created);
     expect(createAccount1Response.accountNumber).to.be.a('string').and.not
       .empty;
 
@@ -360,7 +361,7 @@ describe('API Transfer Tests', () => {
       responseData: createAccount2Response,
     } = await new CreateAccountRequest().createAccount(authToken);
 
-    expect(createAccount2Status).to.equal(201);
+    expect(createAccount2Status).to.equal(HttpStatusCode.Created);
     expect(createAccount2Response.accountNumber).to.be.a('string').and.not
       .empty;
 
@@ -373,7 +374,7 @@ describe('API Transfer Tests', () => {
         100.0,
         authToken,
       );
-    expect(transferStatus).equals(400);
+    expect(transferStatus).equals(HttpStatusCode.BadRequest);
     expect(transferResponse).equal(
       'Invalid transfer: insufficient funds or invalid accounts',
     );
@@ -410,7 +411,7 @@ describe('API Transfer Tests', () => {
   it('user cannot transfer correct amount from another user account into other user account', async () => {
     // create user 1
     const user1 = await new AdminCreateUserRequest().createUser();
-    expect(user1.status).to.equal(201);
+    expect(user1.status).to.equal(HttpStatusCode.Created);
     const loginRequestUser1 = await new GenerateTokenRequest().login({
       username: user1.response.username,
       password: user1.response.password,
@@ -419,7 +420,7 @@ describe('API Transfer Tests', () => {
 
     // create user 2
     const user2 = await new AdminCreateUserRequest().createUser();
-    expect(user2.status).to.equal(201);
+    expect(user2.status).to.equal(HttpStatusCode.Created);
     const loginRequestUser2 = await new GenerateTokenRequest().login({
       username: user2.response.username,
       password: user2.response.password,
@@ -428,7 +429,7 @@ describe('API Transfer Tests', () => {
 
     // create user 3
     const user3 = await new AdminCreateUserRequest().createUser();
-    expect(user3.status).to.equal(201);
+    expect(user3.status).to.equal(HttpStatusCode.Created);
     const loginRequestUser3 = await new GenerateTokenRequest().login({
       username: user3.response.username,
       password: user3.response.password,
@@ -441,7 +442,7 @@ describe('API Transfer Tests', () => {
       responseData: createAccount1User2Response,
     } = await new CreateAccountRequest().createAccount(authTokenUser2);
 
-    expect(createAccount1User2Status).to.equal(201);
+    expect(createAccount1User2Status).to.equal(HttpStatusCode.Created);
     expect(createAccount1User2Response.accountNumber).to.be.a('string').and.not
       .empty;
 
@@ -451,7 +452,7 @@ describe('API Transfer Tests', () => {
       responseData: createAccount1User3Response,
     } = await new CreateAccountRequest().createAccount(authTokenUser3);
 
-    expect(createAccount1User3Status).to.equal(201);
+    expect(createAccount1User3Status).to.equal(HttpStatusCode.Created);
     expect(createAccount1User3Response.accountNumber).to.be.a('string').and.not
       .empty;
 
@@ -463,7 +464,7 @@ describe('API Transfer Tests', () => {
         authTokenUser2,
       );
 
-    expect(depositStatus).equals(200);
+    expect(depositStatus).equals(HttpStatusCode.Ok);
     expect(depositResponse.balance).equal(5000.0);
     expect(depositResponse.id).equal(createAccount1User2Response.id);
     expect(depositResponse.accountNumber).equal(
@@ -479,7 +480,7 @@ describe('API Transfer Tests', () => {
         authTokenUser1,
       );
 
-    expect(transferStatus).equals(403);
+    expect(transferStatus).equals(HttpStatusCode.Forbidden);
     expect(transferResponse).equal('Unauthorized access to account');
 
     // verify account1 user2 information
@@ -519,7 +520,7 @@ describe('API Transfer Tests', () => {
   it('user cannot transfer correct amount from another user account into his own account', async () => {
     // create user 1
     const user1 = await new AdminCreateUserRequest().createUser();
-    expect(user1.status).to.equal(201);
+    expect(user1.status).to.equal(HttpStatusCode.Created);
     const loginRequestUser1 = await new GenerateTokenRequest().login({
       username: user1.response.username,
       password: user1.response.password,
@@ -528,7 +529,7 @@ describe('API Transfer Tests', () => {
 
     // create user 2
     const user2 = await new AdminCreateUserRequest().createUser();
-    expect(user2.status).to.equal(201);
+    expect(user2.status).to.equal(HttpStatusCode.Created);
     const loginRequestUser2 = await new GenerateTokenRequest().login({
       username: user2.response.username,
       password: user2.response.password,
@@ -541,7 +542,7 @@ describe('API Transfer Tests', () => {
       responseData: createAccount1User1Response,
     } = await new CreateAccountRequest().createAccount(authTokenUser1);
 
-    expect(createAccount1User1Status).to.equal(201);
+    expect(createAccount1User1Status).to.equal(HttpStatusCode.Created);
     expect(createAccount1User1Response.accountNumber).to.be.a('string').and.not
       .empty;
 
@@ -551,7 +552,7 @@ describe('API Transfer Tests', () => {
       responseData: createAccount1User2Response,
     } = await new CreateAccountRequest().createAccount(authTokenUser2);
 
-    expect(createAccount1User2Status).to.equal(201);
+    expect(createAccount1User2Status).to.equal(HttpStatusCode.Created);
     expect(createAccount1User2Response.accountNumber).to.be.a('string').and.not
       .empty;
 
@@ -563,7 +564,7 @@ describe('API Transfer Tests', () => {
         authTokenUser2,
       );
 
-    expect(depositStatus).equals(200);
+    expect(depositStatus).equals(HttpStatusCode.Ok);
     expect(depositResponse.balance).equal(5000.0);
     expect(depositResponse.id).equal(createAccount1User2Response.id);
     expect(depositResponse.accountNumber).equal(
@@ -578,7 +579,7 @@ describe('API Transfer Tests', () => {
         100.0,
         authTokenUser1,
       );
-    expect(transferStatus).equal(403);
+    expect(transferStatus).equal(HttpStatusCode.Forbidden);
     expect(transferResponse).equal('Unauthorized access to account');
 
     // verify account1 user2 information
@@ -618,7 +619,7 @@ describe('API Transfer Tests', () => {
   it('user can transfer correct amount from his account to the same account', async () => {
     // create a user
     const user = await new AdminCreateUserRequest().createUser();
-    expect(user.status).to.equal(201);
+    expect(user.status).to.equal(HttpStatusCode.Created);
     const loginRequest = await new GenerateTokenRequest().login({
       username: user.response.username,
       password: user.response.password,
@@ -631,7 +632,7 @@ describe('API Transfer Tests', () => {
       responseData: createAccount1Response,
     } = await new CreateAccountRequest().createAccount(authToken);
 
-    expect(createAccount1Status).to.equal(201);
+    expect(createAccount1Status).to.equal(HttpStatusCode.Created);
     expect(createAccount1Response.accountNumber).to.be.a('string').and.not
       .empty;
 
@@ -642,7 +643,7 @@ describe('API Transfer Tests', () => {
         5000.0,
         authToken,
       );
-    expect(depositStatus).equals(200);
+    expect(depositStatus).equals(HttpStatusCode.Ok);
     expect(depositResponse.balance).equal(5000.0);
     expect(depositResponse.id).equal(createAccount1Response.id);
     expect(depositResponse.accountNumber).equal(
@@ -658,7 +659,7 @@ describe('API Transfer Tests', () => {
         authToken,
       );
 
-    expect(transferStatus).equal(200);
+    expect(transferStatus).equal(HttpStatusCode.Ok);
     expect(transferResponse.senderAccountId).equal(createAccount1Response.id);
     expect(transferResponse.receiverAccountId).equal(createAccount1Response.id);
     expect(transferResponse.amount).equal(100.0);

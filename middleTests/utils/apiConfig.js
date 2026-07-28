@@ -13,7 +13,7 @@ export default class ApiConfig {
     return {
       headers: {
         ...this.#defaultHeaders,
-        Authorization: process.env.ADMIN_AUTH_TOKEN,
+        Authorization: `Basic ${process.env.ADMIN_AUTH_TOKEN}`,
       },
     };
   }

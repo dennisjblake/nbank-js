@@ -1,6 +1,7 @@
+import { HttpStatusCode } from 'axios';
 import { expect } from 'chai';
-import CreateAccountRequest from '../../requests/createAccountRequest.js';
 import AdminCreateUserRequest from '../../requests/adminCreateUserRequest.js';
+import CreateAccountRequest from '../../requests/createAccountRequest.js';
 import GenerateTokenRequest from '../../requests/generateTokenRequest.js';
 
 describe('Account Service Tests', function () {
@@ -15,7 +16,7 @@ describe('Account Service Tests', function () {
     const { status, responseData } =
       await new CreateAccountRequest().createAccount(authToken);
 
-    expect(status).to.equal(201);
+    expect(status).to.equal(HttpStatusCode.Created);
     expect(responseData.accountNumber).to.be.a('string').and.not.empty;
   });
 });

@@ -6,6 +6,7 @@ import CreateAccountRequest from '../../requests/createAccountRequest.js';
 import CustomerAccountsResponse from '../../models/customerAccountsResponse.js';
 import CustomerAccountsRequester from '../../requests/customerAccountsRequester.js';
 import ApiConfig from '../../utils/apiConfig.js';
+import { HttpStatusCode } from 'axios';
 
 describe('API Deposit Tests', () => {
   const validAmounts = [
@@ -20,7 +21,7 @@ describe('API Deposit Tests', () => {
     it(`user can deposit correct amount "${amount}" into his account`, async () => {
       // create a user
       const user = await new AdminCreateUserRequest().createUser();
-      expect(user.status).to.equal(201);
+      expect(user.status).to.equal(HttpStatusCode.Created);
       const loginRequest = await new GenerateTokenRequest().login({
         username: user.response.username,
         password: user.response.password,
@@ -33,7 +34,7 @@ describe('API Deposit Tests', () => {
         responseData: createAccountResponse,
       } = await new CreateAccountRequest().createAccount(authToken);
 
-      expect(createAccountStatus).to.equal(201);
+      expect(createAccountStatus).to.equal(HttpStatusCode.Created);
       expect(createAccountResponse.accountNumber).to.be.a('string').and.not
         .empty;
 
@@ -45,7 +46,7 @@ describe('API Deposit Tests', () => {
           authToken,
         );
 
-      expect(depositStatus).equals(200);
+      expect(depositStatus).equals(HttpStatusCode.Ok);
       expect(depositResponse['balance']).equal(amount);
       expect(depositResponse['id']).equal(createAccountResponse.id);
       expect(depositResponse['accountNumber']).equal(
@@ -61,7 +62,7 @@ describe('API Deposit Tests', () => {
       const { status: accountStatus, responseData: accountResponse } =
         await new CustomerAccountsRequester().getAccounts(authToken);
 
-      expect(accountStatus).equals(200);
+      expect(accountStatus).equals(HttpStatusCode.Ok);
       expect(accountResponse[0].balance).equal(amount);
       expect(accountResponse[0].id).equal(createAccountResponse.id);
       expect(accountResponse[0].accountNumber).equal(
@@ -84,7 +85,7 @@ describe('API Deposit Tests', () => {
     it(`user cannot deposit incorrect amount "${amount}" into his account`, async () => {
       // create a user
       const user = await new AdminCreateUserRequest().createUser();
-      expect(user.status).to.equal(201);
+      expect(user.status).to.equal(HttpStatusCode.Created);
       const loginRequest = await new GenerateTokenRequest().login({
         username: user.response.username,
         password: user.response.password,
@@ -97,7 +98,7 @@ describe('API Deposit Tests', () => {
         responseData: createAccountResponse,
       } = await new CreateAccountRequest().createAccount(authToken);
 
-      expect(createAccountStatus).to.equal(201);
+      expect(createAccountStatus).to.equal(HttpStatusCode.Created);
       expect(createAccountResponse.accountNumber).to.be.a('string').and.not
         .empty;
 
@@ -109,14 +110,14 @@ describe('API Deposit Tests', () => {
           authToken,
         );
 
-      expect(depositStatus).equals(400);
+      expect(depositStatus).equals(HttpStatusCode.BadRequest);
       expect(depositResponse).equal(errorMessage);
 
       // verify account information
       const { status: accountStatus, responseData: accountResponse } =
         await new CustomerAccountsRequester().getAccounts(authToken);
 
-      expect(accountStatus).equals(200);
+      expect(accountStatus).equals(HttpStatusCode.Ok);
       expect(accountResponse[0].balance).equal(0);
       expect(accountResponse[0].id).equal(createAccountResponse.id);
     });
@@ -130,7 +131,7 @@ describe('API Deposit Tests', () => {
     it(`user cannot deposit correct amount into non owned account "${account}" into his account`, async () => {
       // create a user
       const user = await new AdminCreateUserRequest().createUser();
-      expect(user.status).to.equal(201);
+      expect(user.status).to.equal(HttpStatusCode.Created);
       const loginRequest = await new GenerateTokenRequest().login({
         username: user.response.username,
         password: user.response.password,
@@ -143,7 +144,7 @@ describe('API Deposit Tests', () => {
         responseData: createAccountResponse,
       } = await new CreateAccountRequest().createAccount(authToken);
 
-      expect(createAccountStatus).to.equal(201);
+      expect(createAccountStatus).to.equal(HttpStatusCode.Created);
       expect(createAccountResponse.accountNumber).to.be.a('string').and.not
         .empty;
 
@@ -152,14 +153,14 @@ describe('API Deposit Tests', () => {
       const { status: depositStatus, responseData: depositResponse } =
         await new DepositRequester().deposit(account, 100.0, authToken);
 
-      expect(depositStatus).equals(403);
+      expect(depositStatus).equals(HttpStatusCode.Forbidden);
       expect(depositResponse).equal(errorMessage);
     });
   });
   it('admin cannot deposit correct amount into customer account', async () => {
     // create a user
     const user = await new AdminCreateUserRequest().createUser();
-    expect(user.status).to.equal(201);
+    expect(user.status).to.equal(HttpStatusCode.Created);
     const loginRequest = await new GenerateTokenRequest().login({
       username: user.response.username,
       password: user.response.password,
@@ -170,7 +171,7 @@ describe('API Deposit Tests', () => {
     const { status: createAccountStatus, responseData: createAccountResponse } =
       await new CreateAccountRequest().createAccount(authToken);
 
-    expect(createAccountStatus).to.equal(201);
+    expect(createAccountStatus).to.equal(HttpStatusCode.Created);
     expect(createAccountResponse.accountNumber).to.be.a('string').and.not.empty;
 
     // deposit
@@ -181,13 +182,13 @@ describe('API Deposit Tests', () => {
         process.env.ADMIN_AUTH_TOKEN,
       );
 
-    expect(depositStatus).equals(403);
+    expect(depositStatus).equals(HttpStatusCode.Unauthorized);
 
     // verify account information
     const { status: accountStatus, responseData: accountResponse } =
       await new CustomerAccountsRequester().getAccounts(authToken);
 
-    expect(accountStatus).equals(200);
+    expect(accountStatus).equals(HttpStatusCode.Ok);
     expect(accountResponse[0].balance).equal(0);
     expect(accountResponse[0].id).equal(createAccountResponse.id);
   });
