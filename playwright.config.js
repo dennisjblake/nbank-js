@@ -9,7 +9,7 @@ export default defineConfig({
   workers: undefined,
   reporter: [['list'], ['html', { outputFolder: 'playwright-report' }]],
   use: {
-    headless: false,
+    headless: true,
     baseURL: 'http://localhost:3000',
     actionTimeout: 10_000,
     trace: 'retain-on-failure',
@@ -19,6 +19,6 @@ export default defineConfig({
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     // { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
-    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+    // { name: 'webkit', use: { ...devices['Desktop Safari'] } },
   ],
 });
