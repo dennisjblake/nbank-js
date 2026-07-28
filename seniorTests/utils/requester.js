@@ -1,6 +1,5 @@
 import HttpClient from './httpClient.js';
 import endpoints from './endpoints.js';
-import { config } from 'dotenv';
 
 export default class Requester {
   constructor() {

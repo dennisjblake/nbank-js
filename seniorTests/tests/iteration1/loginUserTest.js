@@ -4,7 +4,7 @@ import HTTP_STATUS from '../../utils/httpStatus.js';
 import { AdminSteps } from '../../utils/steps/adminSteps.js';
 import { UserSteps } from '../../utils/steps/userSteps.js';
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 describe('Auth Service Tests', function () {
   it('user should be able to login after creation', async function () {

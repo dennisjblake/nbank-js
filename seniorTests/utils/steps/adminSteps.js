@@ -1,7 +1,6 @@
 import Requester from '../requester.js';
 import ApiConfig from '../apiConfig.js';
 import CreateUserRequest from '../../models/createUserRequest.js';
-import { config } from 'dotenv';
 import { ENDPOINT_KEY } from '../endpoints.js';
 import LoginUserRequest from '../../models/loginUserRequest.js';
 
