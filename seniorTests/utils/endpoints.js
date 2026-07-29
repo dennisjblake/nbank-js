@@ -22,6 +22,7 @@ export const ENDPOINT_KEY = {
   DEPOSIT: 'DEPOSIT',
   TRANSFER: 'TRANSFER',
   GET_ACCOUNTS: 'GET_ACCOUNTS',
+  GET_USERS: 'GET_USERS',
 };
 
 const endpoints = {
@@ -72,6 +73,12 @@ const endpoints = {
     method: 'get',
     requestModel: BaseModel,
     responseModel: CustomerAccountsResponse,
+  },
+  [ENDPOINT_KEY.GET_USERS]: {
+    url: '/admin/users',
+    method: 'get',
+    requestModel: BaseModel,
+    responseModel: CreateUserResponse,
   },
 };
 

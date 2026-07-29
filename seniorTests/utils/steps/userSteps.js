@@ -1,3 +1,4 @@
+import { HttpStatusCode } from 'axios';
 import DepositRequest from '../../models/depositRequest.js';
 import ExpectedError from '../../models/expectedError.js';
 import LoginUserRequest from '../../models/loginUserRequest.js';
@@ -9,6 +10,28 @@ import ApiConfig from '../apiConfig.js';
 import Requester from '../requester.js';
 
 export class UserSteps {
+  constructor({ username, password, token } = {}) {
+    this.username = username;
+    this.password = password;
+    this.token = token;
+    this.requester = new Requester();
+  }
+
+  async ensureToken() {
+    if (this.token) return this.token;
+    if (!this.username || !this.password) {
+      throw new Error('UserSteps.ensureToken: need username/password or token');
+    }
+    const { status, token } = await this.loginWithCreds(
+      this.username,
+      this.password,
+    );
+    if (status !== HttpStatusCode.Ok)
+      throw new Error(`Login failed with status code ${status}`);
+    this.token = token;
+    if (!this.token) throw new Error('Auth headers are missing');
+    return this.token;
+  }
   static async createAccount(auth) {
     const requester = new Requester();
     const response = await requester.request(ENDPOINT_KEY.ACCOUNTS, {
@@ -153,6 +176,19 @@ export class UserSteps {
     return {
       data: response.data,
       status: response.status,
+    };
+  }
+  static async getUserAccounts() {
+    const token = await this.ensureToken();
+
+    const response = await this.requester.request(ENDPOINT_KEY.GET_ACCOUNTS, {
+      config: ApiConfig.getUserAuth(token),
+    });
+    if (response.status !== HttpStatusCode.Ok) {
+      throw new Error('Array of accounts is missing');
+    }
+    return {
+      data: response.data,
     };
   }
 

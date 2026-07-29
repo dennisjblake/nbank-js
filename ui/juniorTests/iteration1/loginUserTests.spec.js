@@ -1,5 +1,5 @@
 import { test, expect } from 'playwright/test';
-import { AdminSteps } from '../../seniorTests/utils/steps/adminSteps.js';
+import { AdminSteps } from '../../../seniorTests/utils/steps/adminSteps.js';
 
 test.describe('AuthService Tests', () => {
   test('user should be able to login after creation', async ({ page }) => {

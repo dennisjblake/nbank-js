@@ -3,6 +3,7 @@ import ApiConfig from '../apiConfig.js';
 import CreateUserRequest from '../../models/createUserRequest.js';
 import { ENDPOINT_KEY } from '../endpoints.js';
 import LoginUserRequest from '../../models/loginUserRequest.js';
+Crud;
 
 export class AdminSteps {
   static async createUser() {
@@ -38,6 +39,17 @@ export class AdminSteps {
       status: responseLogin.status,
       requestData: userData,
       responseData: responseLogin.data,
+    };
+  }
+  static async getAllUsers() {
+    const requester = new Requester();
+
+    const response = await requester.request(ENDPOINT_KEY.GET_USERS, {
+      config: ApiConfig.adminAuth,
+    });
+    return {
+      responseData: response.data,
+      status: response.status,
     };
   }
 }

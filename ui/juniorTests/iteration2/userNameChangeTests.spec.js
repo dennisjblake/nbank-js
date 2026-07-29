@@ -3,9 +3,9 @@ import { expect, test } from 'playwright/test';
 import {
   randomAlphabeticString,
   randomInvalidProfileName,
-} from '../../seniorTests/generators/randomData.js';
-import { AdminSteps } from '../../seniorTests/utils/steps/adminSteps.js';
-import { UserSteps } from '../../seniorTests/utils/steps/userSteps.js';
+} from '../../../seniorTests/generators/randomData.js';
+import { AdminSteps } from '../../../seniorTests/utils/steps/adminSteps.js';
+import { UserSteps } from '../../../seniorTests/utils/steps/userSteps.js';
 
 test.describe('UI Name Change Tests', () => {
   test('user can change name to correct value', async ({ page }) => {

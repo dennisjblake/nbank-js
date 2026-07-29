@@ -3,11 +3,11 @@ import { expect, test } from 'playwright/test';
 import {
   randomDepositAmountWithDecimals,
   randomTransferAmountWithDecimalsBelow,
-} from '../../seniorTests/generators/randomData.js';
-import { assertThatModels } from '../../seniorTests/models/comparison/modelAssertions.js';
-import ACCOUNT_VALUE from '../../seniorTests/utils/accountValue.js';
-import { AdminSteps } from '../../seniorTests/utils/steps/adminSteps.js';
-import { UserSteps } from '../../seniorTests/utils/steps/userSteps.js';
+} from '../../../seniorTests/generators/randomData.js';
+import { assertThatModels } from '../../../seniorTests/models/comparison/modelAssertions.js';
+import ACCOUNT_VALUE from '../../../seniorTests/utils/accountValue.js';
+import { AdminSteps } from '../../../seniorTests/utils/steps/adminSteps.js';
+import { UserSteps } from '../../../seniorTests/utils/steps/userSteps.js';
 
 test.describe('UI Transfer Tests', () => {
   test('user can transfer correct amount from his account into other customer user account', async ({
