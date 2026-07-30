@@ -34,6 +34,7 @@ export default class EditProfile extends BasePage {
   }
 
   async editProfileName(name) {
+    await expect(this.profileNameInputField).toBeVisible();
     await this.profileNameInputField.fill(name);
     await expect(this.profileNameInputField).toHaveValue(name);
     const putProfilePromise = this.page.waitForResponse(
@@ -54,6 +55,7 @@ export default class EditProfile extends BasePage {
   }
 
   async editProfileNameInvalid(name) {
+    await expect(this.profileNameInputField).toBeVisible();
     await this.profileNameInputField.fill(name);
     await expect(this.profileNameInputField).toHaveValue(name);
     await this.saveChangesButton.click({ noWaitAfter: true });
