@@ -10,7 +10,7 @@ export default class AdminPanel extends BasePage {
     return this.page.getByText('Add User', { exact: true });
   }
   get adminPanelMessage() {
-    return this.page.getByText('AdminPanel', { exact: true });
+    return this.page.getByText('Admin Panel', { exact: true });
   }
   get allUsersSections() {
     return this.page.getByText('All Users', { exact: true });

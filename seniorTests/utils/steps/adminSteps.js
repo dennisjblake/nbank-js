@@ -3,7 +3,8 @@ import ApiConfig from '../apiConfig.js';
 import CreateUserRequest from '../../models/createUserRequest.js';
 import { ENDPOINT_KEY } from '../endpoints.js';
 import LoginUserRequest from '../../models/loginUserRequest.js';
-Crud;
+import { expect } from 'playwright/test';
+import { HttpStatusCode } from 'axios';
 
 export class AdminSteps {
   static async createUser() {
@@ -13,6 +14,7 @@ export class AdminSteps {
       data: userData,
       config: ApiConfig.adminAuth,
     });
+    expect(status).toBe(HttpStatusCode.Ok);
     return {
       requestData: userData,
       responseData: response.data,
@@ -34,6 +36,7 @@ export class AdminSteps {
     const responseLogin = await requester.request(ENDPOINT_KEY.LOGIN, {
       data: new LoginUserRequest({ username, password }),
     });
+    expect(responseLogin.status).toBe(HttpStatusCode.Ok);
     return {
       token: responseLogin.headers.authorization,
       status: responseLogin.status,

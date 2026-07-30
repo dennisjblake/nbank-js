@@ -1,9 +1,9 @@
 import { expect, test } from 'playwright/test';
-import { generateUser } from '../../seniorTests/generators/generateRandomUserData.js';
-import { assertThatModels } from '../../seniorTests/models/comparison/modelAssertions.js';
-import CreateUserRequest from '../../seniorTests/models/createUserRequest.js';
-import ApiConfig from '../../seniorTests/utils/apiConfig.js';
-import HttpClient from '../../seniorTests/utils/httpClient.js';
+import { generateUser } from '../../../seniorTests/generators/generateRandomUserData.js';
+import { assertThatModels } from '../../../seniorTests/models/comparison/modelAssertions.js';
+import CreateUserRequest from '../../../seniorTests/models/createUserRequest.js';
+import ApiConfig from '../../../seniorTests/utils/apiConfig.js';
+import HttpClient from '../../../seniorTests/utils/httpClient.js';
 
 test.describe('Admin Service Tests', () => {
   test('admin should be able to create a new user', async ({ page }) => {

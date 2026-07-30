@@ -178,7 +178,8 @@ export class UserSteps {
       status: response.status,
     };
   }
-  static async getUserAccounts() {
+
+  async getUserAccounts() {
     const token = await this.ensureToken();
 
     const response = await this.requester.request(ENDPOINT_KEY.GET_ACCOUNTS, {
@@ -189,6 +190,7 @@ export class UserSteps {
     }
     return {
       data: response.data,
+      status: response.status,
     };
   }
 

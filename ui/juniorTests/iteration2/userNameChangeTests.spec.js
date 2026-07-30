@@ -21,7 +21,22 @@ test.describe('UI Name Change Tests', () => {
     await page.goto('/dashboard');
 
     // change the profile name
+    const getProfileResponses = [
+      page.waitForResponse(
+        (response) =>
+          response.url().includes('profile') &&
+          response.request().method() === 'GET' &&
+          [200].includes(response.status()),
+      ),
+      page.waitForResponse(
+        (response) =>
+          response.url().includes('profile') &&
+          response.request().method() === 'GET' &&
+          [200].includes(response.status()),
+      ),
+    ];
     await page.locator('.profile-header').click();
+    await Promise.all(getProfileResponses);
     await expect(page).toHaveURL('/edit-profile');
     const pageTitleText = page.getByRole('heading', {
       name: '✏️ Edit Profile',
@@ -33,6 +48,18 @@ test.describe('UI Name Change Tests', () => {
     });
     await profileNameInputField.fill(randomProfileName);
     await expect(profileNameInputField).toHaveValue(randomProfileName);
+    const putProfilePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes('profile') &&
+        response.request().method() === 'PUT' &&
+        [200].includes(response.status()),
+    );
+    const getProfilePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes('profile') &&
+        response.request().method() === 'GET' &&
+        [200].includes(response.status()),
+    );
 
     page.once('dialog', async (dialog) => {
       const message = dialog.message();
@@ -41,6 +68,8 @@ test.describe('UI Name Change Tests', () => {
     });
 
     await page.getByRole('button', { name: '💾 Save Changes' }).click();
+
+    await Promise.all([putProfilePromise, getProfilePromise]);
     await page.getByRole('button', { name: '🏠 Home' }).click();
     await expect(page).toHaveURL('/dashboard');
     const welcome = page.locator('.welcome-text');
@@ -67,7 +96,22 @@ test.describe('UI Name Change Tests', () => {
     await page.goto('/dashboard');
 
     // change the profile name
+    const getProfileResponses = [
+      page.waitForResponse(
+        (response) =>
+          response.url().includes('profile') &&
+          response.request().method() === 'GET' &&
+          [200].includes(response.status()),
+      ),
+      page.waitForResponse(
+        (response) =>
+          response.url().includes('profile') &&
+          response.request().method() === 'GET' &&
+          [200].includes(response.status()),
+      ),
+    ];
     await page.locator('.profile-header').click();
+    await Promise.all(getProfileResponses);
     await expect(page).toHaveURL('/edit-profile');
     const pageTitleText = page.getByRole('heading', {
       name: '✏️ Edit Profile',
@@ -127,7 +171,22 @@ test.describe('UI Name Change Tests', () => {
     await expect(welcomeInitial).toHaveText(`Welcome, ${randomProfileName}!`);
 
     // Try to change the profile name to the same value
+    const getProfileResponses = [
+      page.waitForResponse(
+        (response) =>
+          response.url().includes('profile') &&
+          response.request().method() === 'GET' &&
+          [200].includes(response.status()),
+      ),
+      page.waitForResponse(
+        (response) =>
+          response.url().includes('profile') &&
+          response.request().method() === 'GET' &&
+          [200].includes(response.status()),
+      ),
+    ];
     await page.locator('.profile-header').click();
+    await Promise.all(getProfileResponses);
     await expect(page).toHaveURL('/edit-profile');
     const pageTitleText = page.getByRole('heading', {
       name: '✏️ Edit Profile',

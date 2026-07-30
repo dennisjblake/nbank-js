@@ -1,7 +1,7 @@
 import { HttpStatusCode } from 'axios';
 import { expect, test } from 'playwright/test';
-import { AdminSteps } from '../../seniorTests/utils/steps/adminSteps.js';
-import { UserSteps } from '../../seniorTests/utils/steps/userSteps.js';
+import { AdminSteps } from '../../../seniorTests/utils/steps/adminSteps.js';
+import { UserSteps } from '../../../seniorTests/utils/steps/userSteps.js';
 
 test.describe('Account Service Tests', () => {
   test('user should be able to create an account', async ({ page }) => {
