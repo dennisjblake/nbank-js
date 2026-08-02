@@ -1,9 +1,10 @@
 import { expect } from 'playwright/test';
 import BasePage from './basePage.js';
+import URL from './url.js';
 
 export default class AdminPanel extends BasePage {
   get url() {
-    return '/admin';
+    return URL.ADMIN;
   }
 
   get addUserButton() {

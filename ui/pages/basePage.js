@@ -23,13 +23,16 @@ export default class BasePage {
     return new PageClass(this.page);
   }
   async checkAlertAndAccept(bankAlert, trigger) {
-    const [dialog] = await Promise.all([
-      this.page.waitForEvent('dialog'),
-      trigger(),
-    ]);
-    expect(dialog.message()).toContain(bankAlert.message);
-    const text = dialog.message();
-    await dialog.accept();
+    let text;
+    const dialogPromise = new Promise((resolve) => {
+      this.page.once('dialog', async (dialog) => {
+        text = dialog.message();
+        await dialog.accept();
+        resolve();
+      });
+    });
+    await Promise.all([dialogPromise, trigger()]);
+    expect(text).toContain(bankAlert.message);
     return text;
   }
   async checkAlertAndExtractAndAccept(bankAlert, trigger, regex) {

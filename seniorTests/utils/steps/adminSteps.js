@@ -14,7 +14,7 @@ export class AdminSteps {
       data: userData,
       config: ApiConfig.adminAuth,
     });
-    expect(status).toBe(HttpStatusCode.Ok);
+    expect(response.status).toBe(HttpStatusCode.Created);
     return {
       requestData: userData,
       responseData: response.data,

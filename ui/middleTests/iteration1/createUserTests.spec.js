@@ -7,6 +7,7 @@ import { AdminSteps } from '../../../seniorTests/utils/steps/adminSteps.js';
 import { expect, test } from '../../fixtures/baseUi.js';
 import AdminPanel from '../../pages/adminPanelPage.js';
 import { BankAlert } from '../../pages/bankAlert.js';
+import URL from '../../pages/url.js';
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
@@ -16,12 +17,12 @@ const INVALID_USERNAME_RE = /([A-Za-z0-9]{1,2}|[A-Za-z0-9]{16,})/;
 test.describe('Auth Service Tests', () => {
   test('admin should be able to create a new use with correct data', async ({
     page,
-    authAsUser,
+    authAsUserWithCreds,
   }) => {
-    await authAsUser({
+    await authAsUserWithCreds({
       username: ADMIN_USERNAME,
       password: ADMIN_PASSWORD,
-      goto: '/admin',
+      goto: URL.ADMIN,
     });
     const adminPanel = new AdminPanel(page);
     await adminPanel.expectAdminPanelVisible();
@@ -57,12 +58,12 @@ test.describe('Auth Service Tests', () => {
 
   test('admin should not be able to create a new user with invalid data', async ({
     page,
-    authAsUser,
+    authAsUserWithCreds,
   }) => {
-    await authAsUser({
+    await authAsUserWithCreds({
       username: ADMIN_USERNAME,
       password: ADMIN_PASSWORD,
-      goto: '/admin',
+      goto: URL.ADMIN,
     });
     const adminPanel = new AdminPanel(page);
     await adminPanel.expectAdminPanelVisible();

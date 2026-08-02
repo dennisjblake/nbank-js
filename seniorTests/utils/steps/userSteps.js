@@ -1,13 +1,16 @@
 import { HttpStatusCode } from 'axios';
+import { expect } from 'playwright/test';
 import DepositRequest from '../../models/depositRequest.js';
 import ExpectedError from '../../models/expectedError.js';
 import LoginUserRequest from '../../models/loginUserRequest.js';
 import NameChangeRequest from '../../models/nameChangeRequest.js';
 import TransferRequest from '../../models/transferRequest.js';
+import ACCOUNT_VALUE from '../accountValue.js';
 import { ENDPOINT_KEY } from '../../utils/endpoints.js';
 import ErrorHandlingRequester from '../../utils/errorHandlingRequester.js';
 import ApiConfig from '../apiConfig.js';
 import Requester from '../requester.js';
+import { assertThatModels } from '../../models/comparison/modelAssertions.js';
 
 export class UserSteps {
   constructor({ username, password, token } = {}) {
@@ -38,6 +41,8 @@ export class UserSteps {
       data: null,
       config: ApiConfig.getUserAuth(auth),
     });
+    expect(response.status).toBe(HttpStatusCode.Created);
+    expect(response.data.accountNumber).toBeTruthy();
     return {
       responseData: response.data,
       status: response.status,
@@ -65,9 +70,32 @@ export class UserSteps {
       }),
       config: ApiConfig.getUserAuth(auth),
     });
+    expect(response.status).toBe(HttpStatusCode.Ok);
     return {
       data: response.data,
       status: response.status,
+    };
+  }
+
+  static async depositSmart(account, amount, auth) {
+    const limit = ACCOUNT_VALUE.DEPOSIT_MAX_VALUE;
+    const chunks = [];
+    let remaining = amount;
+    while (remaining > limit) {
+      chunks.push(limit);
+      remaining = Number((remaining - limit).toFixed(2));
+    }
+    chunks.push(remaining);
+
+    let lastResponse;
+    for (const chunkAmount of chunks) {
+      lastResponse = await UserSteps.deposit(account.id, chunkAmount, auth);
+    }
+    expect(lastResponse.data['balance']).toBe(amount);
+    await assertThatModels(account, lastResponse.data).match();
+    return {
+      data: lastResponse.data,
+      status: lastResponse.status,
     };
   }
 

@@ -1,132 +1,64 @@
-import { HttpStatusCode } from 'axios';
-import { expect, test } from 'playwright/test';
-import {
-  randomDepositAmountWithDecimals,
-  randomTransferAmountWithDecimalsBelow,
-} from '../../../seniorTests/generators/randomData.js';
+import { randomTransferAmountWithDecimalsBelow } from '../../../seniorTests/generators/randomData.js';
 import { assertThatModels } from '../../../seniorTests/models/comparison/modelAssertions.js';
 import ACCOUNT_VALUE from '../../../seniorTests/utils/accountValue.js';
 import { AdminSteps } from '../../../seniorTests/utils/steps/adminSteps.js';
 import { UserSteps } from '../../../seniorTests/utils/steps/userSteps.js';
+import { expect, test } from '../../fixtures/baseUi.js';
+import { BankAlert } from '../../pages/bankAlert.js';
+import TransferPage from '../../pages/transferPage.js';
+import URL from '../../pages/url.js';
+import UserDashboard from '../../pages/userDashboard.js';
+
+const TRANSFER_ALERT_RE =
+  /^✅ Successfully transferred \$(?<amount>[\d.]+) to account (?<accountNumber>[\w-]+)!$/;
 
 test.describe('UI Transfer Tests', () => {
   test('user can transfer correct amount from his account into other customer user account', async ({
     page,
+    authAsUser,
   }) => {
     // Create user1 and user2
     const transferAmount = randomTransferAmountWithDecimalsBelow(
       ACCOUNT_VALUE.VALUE_10K,
     );
-    const {
-      responseData: user1responseData,
-      token: user1token,
-      status: user1status,
-    } = await AdminSteps.createUserAndLogin();
-    expect(user1status).toBe(HttpStatusCode.Ok);
-
-    const {
-      responseData: user2responseData,
-      token: user2token,
-      status: user2status,
-    } = await AdminSteps.createUserAndLogin();
-    expect(user2status).toBe(HttpStatusCode.Ok);
+    const { token: user1token } = await AdminSteps.createUserAndLogin();
+    const { token: user2token } = await AdminSteps.createUserAndLogin();
 
     // Create an account1 for user1
-    const {
-      responseData: account1user1CreateData,
-      status: account1user1CreateStatus,
-    } = await UserSteps.createAccount(user1token);
-
-    expect(account1user1CreateStatus).toBe(HttpStatusCode.Created);
-    expect(account1user1CreateData.accountNumber).toBeTruthy();
+    const { responseData: account1user1CreateData } =
+      await UserSteps.createAccount(user1token);
 
     // Create an account2 for user2
-    const {
-      responseData: account1user2CreateData,
-      status: account1user2CreateStatus,
-    } = await UserSteps.createAccount(user2token);
+    const { responseData: account1user2CreateData } =
+      await UserSteps.createAccount(user2token);
 
-    expect(account1user2CreateStatus).toBe(HttpStatusCode.Created);
-    expect(account1user2CreateData.accountNumber).toBeTruthy();
-
-    // Deposit into account1 for user1
-    await UserSteps.deposit(
-      account1user1CreateData.id,
-      ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
+    // Deposit 10k into account1 for user1
+    await UserSteps.depositSmart(
+      account1user1CreateData,
+      ACCOUNT_VALUE.VALUE_10K,
       user1token,
     );
-    const { status: depositStatus, data: depositResponse } =
-      await UserSteps.deposit(
-        account1user1CreateData.id,
-        ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
-        user1token,
-      );
-
-    expect(depositStatus).toBe(HttpStatusCode.Ok);
-    expect(depositResponse['balance']).toBe(ACCOUNT_VALUE.VALUE_10K);
-    await assertThatModels(account1user1CreateData, depositResponse).match();
 
     // login
-    await page.addInitScript(
-      (token) => window.localStorage.setItem('authToken', token),
-      user1token,
-    );
-    await page.goto('/dashboard');
+    await authAsUser({ token: user1token, goto: URL.DASHBOARD });
+    const userDashboard = new UserDashboard(page);
+    await userDashboard.expectLoaded();
 
     // make a transfer
-    await page.getByText('🔄 Make a Transfer', { exact: true }).click();
-    await expect(page).toHaveURL('/transfer');
-    const pageTitleText = page.getByRole('heading', {
-      name: '🔄 Make a Transfer',
-    });
-    await expect(pageTitleText).toBeVisible();
-    await expect(pageTitleText).toHaveText('🔄 Make a Transfer');
-
-    const accountSelector = page.locator('.account-selector');
-    const senderAccountInput = accountSelector.locator('option', {
-      hasText: account1user1CreateData.accountNumber,
-    });
-    await expect(senderAccountInput).toBeTruthy();
-    await accountSelector.selectOption(String(account1user1CreateData.id));
-
-    const recipientNameInput = page.locator(
-      '[placeholder="Enter recipient name"]',
-    );
-    await recipientNameInput.fill(user2responseData.username);
-    await expect(recipientNameInput).toHaveValue(user2responseData.username);
-
-    const recipientAccountNumber = page.locator(
-      '[placeholder="Enter recipient account number"]',
-    );
-    await recipientAccountNumber.fill(account1user2CreateData.accountNumber);
-    await expect(recipientAccountNumber).toHaveValue(
-      account1user2CreateData.accountNumber,
+    await userDashboard.openTransferPage();
+    const transferPage = new TransferPage(page);
+    await transferPage.expectLoaded();
+    const alertText = await transferPage.checkAlertAndExtractAndAccept(
+      BankAlert.SUCCESSFULL_TRANSFER_ALERT_TEXT,
+      () =>
+        transferPage.makeTransfer({
+          senderAccount: account1user1CreateData,
+          receiverAccount: account1user2CreateData,
+          amount: transferAmount,
+        }),
+      TRANSFER_ALERT_RE,
     );
 
-    const amountInput = page.locator('[placeholder="Enter amount"]');
-    await amountInput.fill(String(transferAmount));
-    await expect(amountInput).toHaveValue(String(transferAmount));
-
-    const confirmCheckbox = page.locator('#confirmCheck');
-    await confirmCheckbox.check();
-    await expect(confirmCheckbox).toBeChecked();
-
-    page.once('dialog', async (dialog) => {
-      const message = dialog.message();
-      expect(message).toContain(
-        `✅ Successfully transferred $${transferAmount} to account ${account1user2CreateData.accountNumber}!`,
-      );
-      await dialog.accept();
-    });
-    const postTransferPromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('transfer') &&
-        response.request().method() === 'POST' &&
-        [200].includes(response.status()),
-    );
-    await page.getByText('🚀 Send Transfer', { exact: true }).click();
-
-    await postTransferPromise;
     // check the API result
     // verify account information
     const senderAccount = await UserSteps.getAccountById(
@@ -149,114 +81,49 @@ test.describe('UI Transfer Tests', () => {
 
   test('user can transfer correct amount from his account into his account', async ({
     page,
+    authAsUser,
   }) => {
     // Create user1
     const transferAmount = randomTransferAmountWithDecimalsBelow(
       ACCOUNT_VALUE.VALUE_10K,
     );
-    const {
-      responseData: user1responseData,
-      token: user1token,
-      status: user1status,
-    } = await AdminSteps.createUserAndLogin();
-    expect(user1status).toBe(HttpStatusCode.Ok);
+    const { token: user1token } = await AdminSteps.createUserAndLogin();
 
     // Create an account1 for user1
-    const {
-      responseData: account1user1CreateData,
-      status: account1user1CreateStatus,
-    } = await UserSteps.createAccount(user1token);
-
-    expect(account1user1CreateStatus).toBe(HttpStatusCode.Created);
-    expect(account1user1CreateData.accountNumber).toBeTruthy();
+    const { responseData: account1user1CreateData } =
+      await UserSteps.createAccount(user1token);
 
     // Create an account2 for user1
-    const {
-      responseData: account2user1CreateData,
-      status: account2user1CreateStatus,
-    } = await UserSteps.createAccount(user1token);
-
-    expect(account2user1CreateStatus).toBe(HttpStatusCode.Created);
-    expect(account2user1CreateData.accountNumber).toBeTruthy();
+    const { responseData: account2user1CreateData } =
+      await UserSteps.createAccount(user1token);
 
     // Deposit into account1 for user1
-    await UserSteps.deposit(
-      account1user1CreateData.id,
-      ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
+    await UserSteps.depositSmart(
+      account1user1CreateData,
+      ACCOUNT_VALUE.VALUE_10K,
       user1token,
     );
-    const { status: depositStatus, data: depositResponse } =
-      await UserSteps.deposit(
-        account1user1CreateData.id,
-        ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
-        user1token,
-      );
-
-    expect(depositStatus).toBe(HttpStatusCode.Ok);
-    expect(depositResponse['balance']).toBe(ACCOUNT_VALUE.VALUE_10K);
-    await assertThatModels(account1user1CreateData, depositResponse).match();
 
     // login
-    await page.addInitScript(
-      (token) => window.localStorage.setItem('authToken', token),
-      user1token,
-    );
-    await page.goto('/dashboard');
+    await authAsUser({ token: user1token, goto: URL.DASHBOARD });
+    const userDashboard = new UserDashboard(page);
+    await userDashboard.expectLoaded();
 
     // make a transfer
-    await page.getByText('🔄 Make a Transfer', { exact: true }).click();
-    await expect(page).toHaveURL('/transfer');
-    const pageTitleText = page.getByRole('heading', {
-      name: '🔄 Make a Transfer',
-    });
-    await expect(pageTitleText).toBeVisible();
-    await expect(pageTitleText).toHaveText('🔄 Make a Transfer');
-
-    const accountSelector = page.locator('.account-selector');
-    const senderAccountInput = accountSelector.locator('option', {
-      hasText: account1user1CreateData.accountNumber,
-    });
-    await expect(senderAccountInput).toBeTruthy();
-    await accountSelector.selectOption(String(account1user1CreateData.id));
-
-    const recipientNameInput = page.locator(
-      '[placeholder="Enter recipient name"]',
-    );
-    await recipientNameInput.fill(user1responseData.username);
-    await expect(recipientNameInput).toHaveValue(user1responseData.username);
-
-    const recipientAccountNumber = page.locator(
-      '[placeholder="Enter recipient account number"]',
-    );
-    await recipientAccountNumber.fill(account2user1CreateData.accountNumber);
-    await expect(recipientAccountNumber).toHaveValue(
-      account2user1CreateData.accountNumber,
+    await userDashboard.openTransferPage();
+    const transferPage = new TransferPage(page);
+    await transferPage.expectLoaded();
+    const alertText = await transferPage.checkAlertAndExtractAndAccept(
+      BankAlert.SUCCESSFULL_TRANSFER_ALERT_TEXT,
+      () =>
+        transferPage.makeTransfer({
+          senderAccount: account1user1CreateData,
+          receiverAccount: account2user1CreateData,
+          amount: transferAmount,
+        }),
+      TRANSFER_ALERT_RE,
     );
 
-    const amountInput = page.locator('[placeholder="Enter amount"]');
-    await amountInput.fill(String(transferAmount));
-    await expect(amountInput).toHaveValue(String(transferAmount));
-
-    const confirmCheckbox = page.locator('#confirmCheck');
-    await confirmCheckbox.check();
-    await expect(confirmCheckbox).toBeChecked();
-
-    page.once('dialog', async (dialog) => {
-      const message = dialog.message();
-      expect(message).toContain(
-        `✅ Successfully transferred $${transferAmount} to account ${account2user1CreateData.accountNumber}!`,
-      );
-      await dialog.accept();
-    });
-    const postTransferPromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('transfer') &&
-        response.request().method() === 'POST' &&
-        [200].includes(response.status()),
-    );
-    await page.getByText('🚀 Send Transfer', { exact: true }).click();
-
-    await postTransferPromise;
     // check the API result
     // verify account information
     const senderAccount = await UserSteps.getAccountById(
@@ -279,92 +146,44 @@ test.describe('UI Transfer Tests', () => {
 
   test('user cannot transfer correct amount from his account to incorrect account', async ({
     page,
+    authAsUser,
   }) => {
     // Create user1
     const transferAmount = randomTransferAmountWithDecimalsBelow(
       ACCOUNT_VALUE.VALUE_10K,
     );
-    const {
-      responseData: user1responseData,
-      token: user1token,
-      status: user1status,
-    } = await AdminSteps.createUserAndLogin();
-    expect(user1status).toBe(HttpStatusCode.Ok);
+    const { token: user1token } = await AdminSteps.createUserAndLogin();
 
     // Create an account1 for user1
-    const {
-      responseData: account1user1CreateData,
-      status: account1user1CreateStatus,
-    } = await UserSteps.createAccount(user1token);
-
-    expect(account1user1CreateStatus).toBe(HttpStatusCode.Created);
-    expect(account1user1CreateData.accountNumber).toBeTruthy();
+    const { responseData: account1user1CreateData } =
+      await UserSteps.createAccount(user1token);
 
     // Deposit into account1 for user1
-    await UserSteps.deposit(
-      account1user1CreateData.id,
-      ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
+    await UserSteps.depositSmart(
+      account1user1CreateData,
+      ACCOUNT_VALUE.VALUE_10K,
       user1token,
     );
-    const { status: depositStatus, data: depositResponse } =
-      await UserSteps.deposit(
-        account1user1CreateData.id,
-        ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
-        user1token,
-      );
-
-    expect(depositStatus).toBe(HttpStatusCode.Ok);
-    expect(depositResponse['balance']).toBe(ACCOUNT_VALUE.VALUE_10K);
-    await assertThatModels(account1user1CreateData, depositResponse).match();
 
     // login
-    await page.addInitScript(
-      (token) => window.localStorage.setItem('authToken', token),
-      user1token,
-    );
-    await page.goto('/dashboard');
+    await authAsUser({ token: user1token, goto: URL.DASHBOARD });
+    const userDashboard = new UserDashboard(page);
+    await userDashboard.expectLoaded();
 
     // make a transfer
-    await page.getByText('🔄 Make a Transfer', { exact: true }).click();
-    await expect(page).toHaveURL('/transfer');
-    const pageTitleText = page.getByRole('heading', {
-      name: '🔄 Make a Transfer',
-    });
-    await expect(pageTitleText).toBeVisible();
-    await expect(pageTitleText).toHaveText('🔄 Make a Transfer');
-
-    const accountSelector = page.locator('.account-selector');
-    const senderAccountInput = accountSelector.locator('option', {
-      hasText: account1user1CreateData.accountNumber,
-    });
-    await expect(senderAccountInput).toBeTruthy();
-    await accountSelector.selectOption(String(account1user1CreateData.id));
-
-    const recipientNameInput = page.locator(
-      '[placeholder="Enter recipient name"]',
+    await userDashboard.openTransferPage();
+    const transferPage = new TransferPage(page);
+    await transferPage.expectLoaded();
+    const alertText = await transferPage.checkAlertAndAccept(
+      BankAlert.TRANSFER_NO_USER_FOUND_WITH_ACC_NUMBER_ALERT_TEXT,
+      () =>
+        transferPage.makeTransfer({
+          senderAccount: account1user1CreateData,
+          receiverAccount: 0,
+          amount: transferAmount,
+        }),
     );
-    await recipientNameInput.fill(user1responseData.username);
-    await expect(recipientNameInput).toHaveValue(user1responseData.username);
 
-    const recipientAccountNumber = page.locator(
-      '[placeholder="Enter recipient account number"]',
-    );
-    await recipientAccountNumber.fill(String(0));
-    await expect(recipientAccountNumber).toHaveValue(String(0));
-
-    const amountInput = page.locator('[placeholder="Enter amount"]');
-    await amountInput.fill(String(transferAmount));
-    await expect(amountInput).toHaveValue(String(transferAmount));
-
-    const confirmCheckbox = page.locator('#confirmCheck');
-    await confirmCheckbox.check();
-    await expect(confirmCheckbox).toBeChecked();
-
-    page.once('dialog', async (dialog) => {
-      const message = dialog.message();
-      expect(message).toContain(`❌ No user found with this account number.`);
-      await dialog.accept();
-    });
     // check the API result
     // verify account information
     const senderAccount = await UserSteps.getAccountById(
@@ -378,90 +197,41 @@ test.describe('UI Transfer Tests', () => {
 
   test('user cannot transfer with leaving negative balance', async ({
     page,
+    authAsUser,
   }) => {
     // Create user1
     const transferAmount = randomTransferAmountWithDecimalsBelow(
       ACCOUNT_VALUE.VALUE_10K,
     );
-    const {
-      responseData: user1responseData,
-      token: user1token,
-      status: user1status,
-    } = await AdminSteps.createUserAndLogin();
-    expect(user1status).toBe(HttpStatusCode.Ok);
+    const { token: user1token } = await AdminSteps.createUserAndLogin();
 
     // Create an account1 for user1
-    const {
-      responseData: account1user1CreateData,
-      status: account1user1CreateStatus,
-    } = await UserSteps.createAccount(user1token);
-
-    expect(account1user1CreateStatus).toBe(HttpStatusCode.Created);
-    expect(account1user1CreateData.accountNumber).toBeTruthy();
+    const { responseData: account1user1CreateData } =
+      await UserSteps.createAccount(user1token);
 
     // Create an account2 for user1
-    const {
-      responseData: account2user1CreateData,
-      status: account2user1CreateStatus,
-    } = await UserSteps.createAccount(user1token);
-
-    expect(account2user1CreateStatus).toBe(HttpStatusCode.Created);
-    expect(account2user1CreateData.accountNumber).toBeTruthy();
+    const { responseData: account2user1CreateData } =
+      await UserSteps.createAccount(user1token);
 
     // login
-    await page.addInitScript(
-      (token) => window.localStorage.setItem('authToken', token),
-      user1token,
-    );
-    await page.goto('/dashboard');
+    await authAsUser({ token: user1token, goto: URL.DASHBOARD });
+    const userDashboard = new UserDashboard(page);
+    await userDashboard.expectLoaded();
 
     // make a transfer
-    await page.getByText('🔄 Make a Transfer', { exact: true }).click();
-    await expect(page).toHaveURL('/transfer');
-    const pageTitleText = page.getByRole('heading', {
-      name: '🔄 Make a Transfer',
-    });
-    await expect(pageTitleText).toBeVisible();
-    await expect(pageTitleText).toHaveText('🔄 Make a Transfer');
-
-    const accountSelector = page.locator('.account-selector');
-    const senderAccountInput = accountSelector.locator('option', {
-      hasText: account1user1CreateData.accountNumber,
-    });
-    await expect(senderAccountInput).toBeTruthy();
-    await accountSelector.selectOption(String(account1user1CreateData.id));
-
-    const recipientNameInput = page.locator(
-      '[placeholder="Enter recipient name"]',
-    );
-    await recipientNameInput.fill(user1responseData.username);
-    await expect(recipientNameInput).toHaveValue(user1responseData.username);
-
-    const recipientAccountNumber = page.locator(
-      '[placeholder="Enter recipient account number"]',
-    );
-    await recipientAccountNumber.fill(account2user1CreateData.accountNumber);
-    await expect(recipientAccountNumber).toHaveValue(
-      account2user1CreateData.accountNumber,
+    await userDashboard.openTransferPage();
+    const transferPage = new TransferPage(page);
+    await transferPage.expectLoaded();
+    const alertText = await transferPage.checkAlertAndAccept(
+      BankAlert.TRANSFER_NO_FUNDS_ALERT_TEXT,
+      () =>
+        transferPage.makeTransfer({
+          senderAccount: account1user1CreateData,
+          receiverAccount: account2user1CreateData,
+          amount: transferAmount,
+        }),
     );
 
-    const amountInput = page.locator('[placeholder="Enter amount"]');
-    await amountInput.fill(String(transferAmount));
-    await expect(amountInput).toHaveValue(String(transferAmount));
-
-    const confirmCheckbox = page.locator('#confirmCheck');
-    await confirmCheckbox.check();
-    await expect(confirmCheckbox).toBeChecked();
-
-    page.once('dialog', async (dialog) => {
-      const message = dialog.message();
-      expect(message).toContain(
-        `❌ Error: Invalid transfer: insufficient funds or invalid accounts`,
-      );
-      await dialog.accept();
-    });
-
-    await page.getByText('🚀 Send Transfer', { exact: true }).click();
     // check the API result
     // verify account information
     const senderAccount = await UserSteps.getAccountById(
@@ -482,137 +252,69 @@ test.describe('UI Transfer Tests', () => {
 
   test('user cannot transfer without filling out all fields and confirmation', async ({
     page,
+    authAsUser,
   }) => {
     // Create user1
     const transferAmount = randomTransferAmountWithDecimalsBelow(
       ACCOUNT_VALUE.VALUE_10K,
     );
-    const {
-      responseData: user1responseData,
-      token: user1token,
-      status: user1status,
-    } = await AdminSteps.createUserAndLogin();
-    expect(user1status).toBe(HttpStatusCode.Ok);
+    const { token: user1token } = await AdminSteps.createUserAndLogin();
 
     // login
-    await page.addInitScript(
-      (token) => window.localStorage.setItem('authToken', token),
-      user1token,
-    );
-    await page.goto('/dashboard');
+    await authAsUser({ token: user1token, goto: URL.DASHBOARD });
+    const userDashboard = new UserDashboard(page);
+    await userDashboard.expectLoaded();
 
     // make a transfer
-    await page.getByText('🔄 Make a Transfer', { exact: true }).click();
-    await expect(page).toHaveURL('/transfer');
-    const pageTitleText = page.getByRole('heading', {
-      name: '🔄 Make a Transfer',
-    });
-    await expect(pageTitleText).toBeVisible();
-    await expect(pageTitleText).toHaveText('🔄 Make a Transfer');
-
-    page.once('dialog', async (dialog) => {
-      const message = dialog.message();
-      expect(message).toContain(`❌ Please fill all fields and confirm.`);
-      await dialog.accept();
-    });
-
-    await page.getByText('🚀 Send Transfer', { exact: true }).click();
+    await userDashboard.openTransferPage();
+    const transferPage = new TransferPage(page);
+    await transferPage.expectLoaded();
+    const alertText = await transferPage.checkAlertAndAccept(
+      BankAlert.TRANSFER_FILL_ALL_FIELDS_ALERT_TEXT,
+      () => transferPage.makeTransfer({ amount: transferAmount }),
+    );
   });
 
   test('user cannot transfer invalid amount from his account into his account', async ({
     page,
+    authAsUser,
   }) => {
     // Create user1
-    const {
-      responseData: user1responseData,
-      token: user1token,
-      status: user1status,
-    } = await AdminSteps.createUserAndLogin();
-    expect(user1status).toBe(HttpStatusCode.Ok);
+    const { token: user1token } = await AdminSteps.createUserAndLogin();
 
     // Create an account1 for user1
-    const {
-      responseData: account1user1CreateData,
-      status: account1user1CreateStatus,
-    } = await UserSteps.createAccount(user1token);
-
-    expect(account1user1CreateStatus).toBe(HttpStatusCode.Created);
-    expect(account1user1CreateData.accountNumber).toBeTruthy();
+    const { responseData: account1user1CreateData } =
+      await UserSteps.createAccount(user1token);
 
     // Create an account2 for user1
-    const {
-      responseData: account2user1CreateData,
-      status: account2user1CreateStatus,
-    } = await UserSteps.createAccount(user1token);
-
-    expect(account2user1CreateStatus).toBe(HttpStatusCode.Created);
-    expect(account2user1CreateData.accountNumber).toBeTruthy();
+    const { responseData: account2user1CreateData } =
+      await UserSteps.createAccount(user1token);
 
     // Deposit into account1 for user1
-    const { status: depositStatus, data: depositResponse } =
-      await UserSteps.deposit(
-        account1user1CreateData.id,
-        ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
-        user1token,
-      );
-
-    expect(depositStatus).toBe(HttpStatusCode.Ok);
-    expect(depositResponse['balance']).toBe(ACCOUNT_VALUE.VALUE_5K);
-    await assertThatModels(account1user1CreateData, depositResponse).match();
-
-    // login
-    await page.addInitScript(
-      (token) => window.localStorage.setItem('authToken', token),
+    await UserSteps.depositSmart(
+      account1user1CreateData,
+      ACCOUNT_VALUE.VALUE_5K,
       user1token,
     );
-    await page.goto('/dashboard');
+
+    // login
+    await authAsUser({ token: user1token, goto: URL.DASHBOARD });
+    const userDashboard = new UserDashboard(page);
+    await userDashboard.expectLoaded();
 
     // make a transfer
-    await page.getByText('🔄 Make a Transfer', { exact: true }).click();
-    await expect(page).toHaveURL('/transfer');
-    const pageTitleText = page.getByRole('heading', {
-      name: '🔄 Make a Transfer',
-    });
-    await expect(pageTitleText).toBeVisible();
-    await expect(pageTitleText).toHaveText('🔄 Make a Transfer');
-
-    const accountSelector = page.locator('.account-selector');
-    const senderAccountInput = accountSelector.locator('option', {
-      hasText: account1user1CreateData.accountNumber,
-    });
-    await expect(senderAccountInput).toBeTruthy();
-    await accountSelector.selectOption(String(account1user1CreateData.id));
-
-    const recipientNameInput = page.locator(
-      '[placeholder="Enter recipient name"]',
+    await userDashboard.openTransferPage();
+    const transferPage = new TransferPage(page);
+    await transferPage.expectLoaded();
+    const alertText = await transferPage.checkAlertAndAccept(
+      BankAlert.TRANSFER_BEYOND_LIMIT_ALERT_TEXT,
+      () =>
+        transferPage.makeTransfer({
+          senderAccount: account1user1CreateData,
+          receiverAccount: account2user1CreateData,
+          amount: ACCOUNT_VALUE.ZERO_VALUE,
+        }),
     );
-    await recipientNameInput.fill(user1responseData.username);
-    await expect(recipientNameInput).toHaveValue(user1responseData.username);
-
-    const recipientAccountNumber = page.locator(
-      '[placeholder="Enter recipient account number"]',
-    );
-    await recipientAccountNumber.fill(account2user1CreateData.accountNumber);
-    await expect(recipientAccountNumber).toHaveValue(
-      account2user1CreateData.accountNumber,
-    );
-
-    const amountInput = page.locator('[placeholder="Enter amount"]');
-    await amountInput.fill(String(0));
-    await expect(amountInput).toHaveValue(String(0));
-
-    const confirmCheckbox = page.locator('#confirmCheck');
-    await confirmCheckbox.check();
-    await expect(confirmCheckbox).toBeChecked();
-
-    page.once('dialog', async (dialog) => {
-      const message = dialog.message();
-      expect(message).toContain(
-        `❌ Error: Transfer amount must be at least 0.01`,
-      );
-      await dialog.accept();
-    });
-    await page.getByText('🚀 Send Transfer', { exact: true }).click();
 
     // check the API result
     // verify account information

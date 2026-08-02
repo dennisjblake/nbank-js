@@ -1,9 +1,11 @@
-import BasePage from './basePage.js';
+import { HttpStatusCode } from 'axios';
 import { expect } from 'playwright/test';
+import BasePage from './basePage.js';
+import URL from './url.js';
 
 export default class EditProfile extends BasePage {
   get url() {
-    return '/edit-profile';
+    return URL.EDIT_PROFILE;
   }
 
   get profileHeaderLink() {
@@ -41,13 +43,13 @@ export default class EditProfile extends BasePage {
       (response) =>
         response.url().includes('profile') &&
         response.request().method() === 'PUT' &&
-        [200].includes(response.status()),
+        [HttpStatusCode.Ok].includes(response.status()),
     );
     const getProfilePromise = this.page.waitForResponse(
       (response) =>
         response.url().includes('profile') &&
         response.request().method() === 'GET' &&
-        [200].includes(response.status()),
+        [HttpStatusCode.Ok].includes(response.status()),
     );
     await this.saveChangesButton.click();
     await Promise.all([putProfilePromise, getProfilePromise]);
@@ -56,9 +58,10 @@ export default class EditProfile extends BasePage {
 
   async editProfileNameInvalid(name) {
     await expect(this.profileNameInputField).toBeVisible();
+    await this.profileNameInputField.clear();
     await this.profileNameInputField.fill(name);
     await expect(this.profileNameInputField).toHaveValue(name);
-    await this.saveChangesButton.click({ noWaitAfter: true });
+    await this.saveChangesButton.click();
     return this;
   }
 

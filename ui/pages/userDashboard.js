@@ -1,9 +1,11 @@
-import BasePage from './basePage.js';
+import { HttpStatusCode } from 'axios';
 import { expect } from 'playwright/test';
+import BasePage from './basePage.js';
+import URL from './url.js';
 
 export default class UserDashboard extends BasePage {
   get url() {
-    return '/dashboard';
+    return URL.DASHBOARD;
   }
 
   get welcomeText() {
@@ -16,6 +18,13 @@ export default class UserDashboard extends BasePage {
 
   get createAccountButton() {
     return this.page.getByText('➕ Create New Account', { exact: true });
+  }
+  get makeATransferButton() {
+    return this.page.getByText('🔄 Make a Transfer', { exact: true });
+  }
+
+  get depositMoneyButton() {
+    return this.page.getByText('💰 Deposit Money', { exact: true });
   }
 
   get userDashboardText() {
@@ -33,18 +42,44 @@ export default class UserDashboard extends BasePage {
         (response) =>
           response.url().includes('profile') &&
           response.request().method() === 'GET' &&
-          [200].includes(response.status()),
+          [HttpStatusCode.Ok].includes(response.status()),
       ),
       this.page.waitForResponse(
         (response) =>
           response.url().includes('profile') &&
           response.request().method() === 'GET' &&
-          [200].includes(response.status()),
+          [HttpStatusCode.Ok].includes(response.status()),
       ),
     ];
     await this.profileHeaderLink.click();
     await Promise.all(getProfileResponses);
-    await expect(this.page).toHaveURL('/edit-profile');
+    await expect(this.page).toHaveURL(URL.EDIT_PROFILE);
+    return this;
+  }
+  async openDepositMoneyPage() {
+    const getAccountsResponses = [
+      this.page.waitForResponse(
+        (response) =>
+          response.url().includes('accounts') &&
+          response.request().method() === 'GET' &&
+          [HttpStatusCode.Ok].includes(response.status()),
+      ),
+      this.page.waitForResponse(
+        (response) =>
+          response.url().includes('accounts') &&
+          response.request().method() === 'GET' &&
+          [HttpStatusCode.Ok].includes(response.status()),
+      ),
+    ];
+    await this.depositMoneyButton.click();
+    await Promise.all(getAccountsResponses);
+    await expect(this.page).toHaveURL(URL.DEPOSIT);
+    return this;
+  }
+
+  async openTransferPage() {
+    await this.makeATransferButton.click();
+    await expect(this.page).toHaveURL(URL.TRANSFER);
     return this;
   }
 

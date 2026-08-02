@@ -1,66 +1,45 @@
-import { HttpStatusCode } from 'axios';
-import { expect, test } from 'playwright/test';
 import { randomDepositAmountWithDecimals } from '../../../seniorTests/generators/randomData.js';
 import { assertThatModels } from '../../../seniorTests/models/comparison/modelAssertions.js';
 import ACCOUNT_VALUE from '../../../seniorTests/utils/accountValue.js';
 import { AdminSteps } from '../../../seniorTests/utils/steps/adminSteps.js';
 import { UserSteps } from '../../../seniorTests/utils/steps/userSteps.js';
+import { expect, test } from '../../fixtures/baseUi.js';
+import { BankAlert } from '../../pages/bankAlert.js';
+import DepositMoney from '../../pages/depositMoneyPage.js';
+import URL from '../../pages/url.js';
+import UserDashboard from '../../pages/userDashboard.js';
+
+const DEPOSIT_ALERT_RE =
+  /^✅ Successfully deposited \$(?<amount>[\d.]+) to account (?<accountNumber>[\w-]+)!$/;
 
 test.describe('UI Deposit Tests', () => {
-  test('user can deposit correct amount into his account', async ({ page }) => {
+  test('user can deposit correct amount into his account', async ({
+    page,
+    authAsUser,
+  }) => {
     // Create user and login
+    const { token } = await AdminSteps.createUserAndLogin();
     const amount = randomDepositAmountWithDecimals();
-    const { requestData, token, status } =
-      await AdminSteps.createUserAndLogin();
-    expect(status).toBe(HttpStatusCode.Ok);
-
-    // Create an account
-    const { responseData: accountCreateData, status: accountCreateStatus } =
+    // Create an account with API
+    const { responseData: accountCreateData } =
       await UserSteps.createAccount(token);
 
-    expect(accountCreateStatus).toBe(HttpStatusCode.Created);
-    expect(accountCreateData.accountNumber).toBeTruthy();
-
     // login
-    await page.addInitScript(
-      (token) => window.localStorage.setItem('authToken', token),
-      token,
-    );
-    await page.goto('/dashboard');
+    await authAsUser({ token, goto: URL.DASHBOARD });
+    const userDashboard = new UserDashboard(page);
+    await userDashboard.expectLoaded();
 
     // make a deposit
-    await page.getByText('💰 Deposit Money', { exact: true }).click();
-    await expect(page).toHaveURL('/deposit');
-    const pageTitleText = page.getByRole('heading', {
-      name: '💰 Deposit Money',
-    });
-    await expect(pageTitleText).toBeVisible();
-    await expect(pageTitleText).toHaveText('💰 Deposit Money');
+    await userDashboard.openDepositMoneyPage();
 
-    const accountSelector = page.locator('.account-selector');
-    const depositAccount = accountSelector.locator('option', {
-      hasText: accountCreateData.accountNumber,
-    });
-    await expect(depositAccount).toBeTruthy();
-    await accountSelector.selectOption(String(accountCreateData.id));
-
-    await page.locator('.deposit-input').fill(String(amount));
-    await expect(page.locator('.deposit-input')).toHaveValue(String(amount));
-    const postDepositPromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('deposit') &&
-        response.request().method() === 'POST' &&
-        [200].includes(response.status()),
+    const depositMoneyPage = new DepositMoney(page);
+    await depositMoneyPage.expectLoaded();
+    const alertText = await depositMoneyPage.checkAlertAndExtractAndAccept(
+      BankAlert.SUCCESSFULL_DEPOSIT_ALERT_TEXT,
+      () => depositMoneyPage.makeDeposit(accountCreateData.id, amount),
+      DEPOSIT_ALERT_RE,
     );
-    page.once('dialog', async (dialog) => {
-      const message = dialog.message();
-      expect(message).toContain(
-        `✅ Successfully deposited $${amount} to account ${accountCreateData.accountNumber}!`,
-      );
-      await dialog.accept();
-    });
-    await page.getByText('💵 Deposit', { exact: true }).click();
-    await postDepositPromise;
+
     // check the API result
     const accountAfterDeposit = await UserSteps.getAccountById(
       accountCreateData.id,
@@ -71,51 +50,30 @@ test.describe('UI Deposit Tests', () => {
   });
   test('user cannot deposit amount over limit into his account', async ({
     page,
+    authAsUser,
   }) => {
     // Create user and login
-    const { requestData, token, status } =
-      await AdminSteps.createUserAndLogin();
-    expect(status).toBe(HttpStatusCode.Ok);
-
-    // Create an account
-    const { responseData: accountCreateData, status: accountCreateStatus } =
+    const { token } = await AdminSteps.createUserAndLogin();
+    const amount = ACCOUNT_VALUE.VALUE_15K;
+    // Create an account with API
+    const { responseData: accountCreateData } =
       await UserSteps.createAccount(token);
 
-    expect(accountCreateStatus).toBe(HttpStatusCode.Created);
-    expect(accountCreateData.accountNumber).toBeTruthy();
-
     // login
-    await page.addInitScript(
-      (token) => window.localStorage.setItem('authToken', token),
-      token,
-    );
-    await page.goto('/dashboard');
+    await authAsUser({ token, goto: URL.DASHBOARD });
+    const userDashboard = new UserDashboard(page);
+    await userDashboard.expectLoaded();
 
     // make a deposit
-    await page.getByText('💰 Deposit Money', { exact: true }).click();
-    await expect(page).toHaveURL('/deposit');
-    const pageTitleText = page.getByRole('heading', {
-      name: '💰 Deposit Money',
-    });
-    await expect(pageTitleText).toBeVisible();
-    await expect(pageTitleText).toHaveText('💰 Deposit Money');
+    await userDashboard.openDepositMoneyPage();
 
-    const accountSelector = page.locator('.account-selector');
-    const depositAccount = accountSelector.locator('option', {
-      hasText: accountCreateData.accountNumber,
-    });
-    await expect(depositAccount).toBeTruthy();
-    await accountSelector.selectOption(String(accountCreateData.id));
+    const depositMoneyPage = new DepositMoney(page);
+    await depositMoneyPage.expectLoaded();
+    const alertText = await depositMoneyPage.checkAlertAndAccept(
+      BankAlert.DESPOSIT_OVER_LIMIT_ALERT_TEXT,
+      () => depositMoneyPage.makeDeposit(accountCreateData.id, amount),
+    );
 
-    const amount = ACCOUNT_VALUE.VALUE_15K;
-    await page.locator('.deposit-input').fill(String(amount));
-    await expect(page.locator('.deposit-input')).toHaveValue(String(amount));
-    page.once('dialog', async (dialog) => {
-      const message = dialog.message();
-      expect(message).toContain(`❌ Please deposit less or equal to 5000$.`);
-      await dialog.accept();
-    });
-    await page.getByText('💵 Deposit', { exact: true }).click();
     // check the API result
     const accountAfterDeposit = await UserSteps.getAccountById(
       accountCreateData.id,
@@ -123,51 +81,32 @@ test.describe('UI Deposit Tests', () => {
     );
     expect(accountAfterDeposit.balance).toBe(ACCOUNT_VALUE.ZERO_VALUE);
   });
-  test('user cannot deposit 0 amount into his account', async ({ page }) => {
+  test('user cannot deposit 0 amount into his account', async ({
+    page,
+    authAsUser,
+  }) => {
     // Create user and login
-    const { requestData, token, status } =
-      await AdminSteps.createUserAndLogin();
-    expect(status).toBe(HttpStatusCode.Ok);
-
-    // Create an account
-    const { responseData: accountCreateData, status: accountCreateStatus } =
+    const amount = ACCOUNT_VALUE.ZERO_VALUE;
+    const { token } = await AdminSteps.createUserAndLogin();
+    // Create an account with API
+    const { responseData: accountCreateData } =
       await UserSteps.createAccount(token);
 
-    expect(accountCreateStatus).toBe(HttpStatusCode.Created);
-    expect(accountCreateData.accountNumber).toBeTruthy();
-
     // login
-    await page.addInitScript(
-      (token) => window.localStorage.setItem('authToken', token),
-      token,
-    );
-    await page.goto('/dashboard');
+    await authAsUser({ token, goto: URL.DASHBOARD });
+    const userDashboard = new UserDashboard(page);
+    await userDashboard.expectLoaded();
 
     // make a deposit
-    await page.getByText('💰 Deposit Money', { exact: true }).click();
-    await expect(page).toHaveURL('/deposit');
-    const pageTitleText = page.getByRole('heading', {
-      name: '💰 Deposit Money',
-    });
-    await expect(pageTitleText).toBeVisible();
-    await expect(pageTitleText).toHaveText('💰 Deposit Money');
+    await userDashboard.openDepositMoneyPage();
 
-    const accountSelector = page.locator('.account-selector');
-    const depositAccount = accountSelector.locator('option', {
-      hasText: accountCreateData.accountNumber,
-    });
-    await expect(depositAccount).toBeTruthy();
-    await accountSelector.selectOption(String(accountCreateData.id));
+    const depositMoneyPage = new DepositMoney(page);
+    await depositMoneyPage.expectLoaded();
+    const alertText = await depositMoneyPage.checkAlertAndAccept(
+      BankAlert.DESPOSIT_UNDER_LIMIT_ALERT_TEXT,
+      () => depositMoneyPage.makeDeposit(accountCreateData.id, amount),
+    );
 
-    const amount = ACCOUNT_VALUE.ZERO_VALUE;
-    await page.locator('.deposit-input').fill(String(amount));
-    await expect(page.locator('.deposit-input')).toHaveValue(String(amount));
-    page.once('dialog', async (dialog) => {
-      const message = dialog.message();
-      expect(message).toContain(`❌ Please enter a valid amount.`);
-      await dialog.accept();
-    });
-    await page.getByText('💵 Deposit', { exact: true }).click();
     // check the API result
     const accountAfterDeposit = await UserSteps.getAccountById(
       accountCreateData.id,
@@ -178,36 +117,25 @@ test.describe('UI Deposit Tests', () => {
 
   test('user cannot make a deposit if an account is not selected', async ({
     page,
+    authAsUser,
   }) => {
     // Create user and login
-    const { requestData, token, status } =
-      await AdminSteps.createUserAndLogin();
-    expect(status).toBe(HttpStatusCode.Ok);
+    const amount = randomDepositAmountWithDecimals();
+    const { token } = await AdminSteps.createUserAndLogin();
 
     // login
-    await page.addInitScript(
-      (token) => window.localStorage.setItem('authToken', token),
-      token,
-    );
-    await page.goto('/dashboard');
+    await authAsUser({ token, goto: URL.DASHBOARD });
+    const userDashboard = new UserDashboard(page);
+    await userDashboard.expectLoaded();
 
     // make a deposit
-    await page.getByText('💰 Deposit Money', { exact: true }).click();
-    await expect(page).toHaveURL('/deposit');
-    const pageTitleText = page.getByRole('heading', {
-      name: '💰 Deposit Money',
-    });
-    await expect(pageTitleText).toBeVisible();
-    await expect(pageTitleText).toHaveText('💰 Deposit Money');
+    await userDashboard.openDepositMoneyPage();
 
-    const amount = randomDepositAmountWithDecimals();
-    await page.locator('.deposit-input').fill(String(amount));
-    await expect(page.locator('.deposit-input')).toHaveValue(String(amount));
-    page.once('dialog', async (dialog) => {
-      const message = dialog.message();
-      expect(message).toContain(`❌ Please select an account.`);
-      await dialog.accept();
-    });
-    await page.getByText('💵 Deposit', { exact: true }).click();
+    const depositMoneyPage = new DepositMoney(page);
+    await depositMoneyPage.expectLoaded();
+    const alertText = await depositMoneyPage.checkAlertAndAccept(
+      BankAlert.DEPOSIT_ACCOUNT_NOT_SELECTED_ALERT_TEXT,
+      () => depositMoneyPage.makeDeposit(null, amount),
+    );
   });
 });
