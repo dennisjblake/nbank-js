@@ -1,16 +1,16 @@
 import { HttpStatusCode } from 'axios';
 import { expect } from 'playwright/test';
+import { assertThatModels } from '../../models/comparison/modelAssertions.js';
 import DepositRequest from '../../models/depositRequest.js';
 import ExpectedError from '../../models/expectedError.js';
 import LoginUserRequest from '../../models/loginUserRequest.js';
 import NameChangeRequest from '../../models/nameChangeRequest.js';
 import TransferRequest from '../../models/transferRequest.js';
-import ACCOUNT_VALUE from '../accountValue.js';
 import { ENDPOINT_KEY } from '../../utils/endpoints.js';
 import ErrorHandlingRequester from '../../utils/errorHandlingRequester.js';
+import ACCOUNT_VALUE from '../accountValue.js';
 import ApiConfig from '../apiConfig.js';
 import Requester from '../requester.js';
-import { assertThatModels } from '../../models/comparison/modelAssertions.js';
 
 export class UserSteps {
   constructor({ username, password, token } = {}) {
@@ -25,7 +25,7 @@ export class UserSteps {
     if (!this.username || !this.password) {
       throw new Error('UserSteps.ensureToken: need username/password or token');
     }
-    const { status, token } = await this.loginWithCreds(
+    const { status, token } = await UserSteps.loginWithCreds(
       this.username,
       this.password,
     );
@@ -40,6 +40,21 @@ export class UserSteps {
     const response = await requester.request(ENDPOINT_KEY.ACCOUNTS, {
       data: null,
       config: ApiConfig.getUserAuth(auth),
+    });
+    expect(response.status).toBe(HttpStatusCode.Created);
+    expect(response.data.accountNumber).toBeTruthy();
+    return {
+      responseData: response.data,
+      status: response.status,
+    };
+  }
+
+  async createAccount() {
+    const token = await this.ensureToken();
+    const requester = new Requester();
+    const response = await requester.request(ENDPOINT_KEY.ACCOUNTS, {
+      data: null,
+      config: ApiConfig.getUserAuth(token),
     });
     expect(response.status).toBe(HttpStatusCode.Created);
     expect(response.data.accountNumber).toBeTruthy();
@@ -90,6 +105,29 @@ export class UserSteps {
     let lastResponse;
     for (const chunkAmount of chunks) {
       lastResponse = await UserSteps.deposit(account.id, chunkAmount, auth);
+    }
+    expect(lastResponse.data['balance']).toBe(amount);
+    await assertThatModels(account, lastResponse.data).match();
+    return {
+      data: lastResponse.data,
+      status: lastResponse.status,
+    };
+  }
+
+  async depositSmart(account, amount) {
+    const token = await this.ensureToken();
+    const limit = ACCOUNT_VALUE.DEPOSIT_MAX_VALUE;
+    const chunks = [];
+    let remaining = amount;
+    while (remaining > limit) {
+      chunks.push(limit);
+      remaining = Number((remaining - limit).toFixed(2));
+    }
+    chunks.push(remaining);
+
+    let lastResponse;
+    for (const chunkAmount of chunks) {
+      lastResponse = await UserSteps.deposit(account.id, chunkAmount, token);
     }
     expect(lastResponse.data['balance']).toBe(amount);
     await assertThatModels(account, lastResponse.data).match();
@@ -222,24 +260,48 @@ export class UserSteps {
     };
   }
 
+  async getProfileInfo() {
+    const token = await this.ensureToken();
+
+    const response = await this.requester.request(ENDPOINT_KEY.GET_PROFILE, {
+      config: ApiConfig.getUserAuth(token),
+    });
+    expect(response.status).toBe(HttpStatusCode.Ok);
+    return {
+      data: response.data,
+      status: response.status,
+    };
+  }
+
+  async changeProfileName(name) {
+    const token = await this.ensureToken();
+
+    const response = await this.requester.request(ENDPOINT_KEY.CHANGE_PROFILE, {
+      data: new NameChangeRequest({ name }),
+      config: ApiConfig.getUserAuth(token),
+    });
+
+    expect(response.status).toBe(HttpStatusCode.Ok);
+    expect(response.data.customer.name).toBe(name);
+
+    return {
+      data: response.data,
+      status: response.status,
+    };
+  }
+
   static async getAccountById(id, auth) {
     const { status: customerAccountStatus, data: customerAccountsResponse } =
       await UserSteps.getUserAccounts(auth);
     return customerAccountsResponse.find((a) => a.id === id);
   }
-
-  static async login(createdUserRequestData) {
-    const requester = new Requester();
-    const username = createdUserRequestData.username;
-    const password = createdUserRequestData.password;
-    const response = await requester.request(ENDPOINT_KEY.LOGIN, {
-      data: new LoginUserRequest({ username, password }),
-    });
-    return {
-      token: response.headers.authorization,
-      status: response.status,
-    };
+  async getAccountById(id) {
+    const token = await this.ensureToken();
+    const { status: customerAccountStatus, data: customerAccountsResponse } =
+      await UserSteps.getUserAccounts(token);
+    return customerAccountsResponse.find((a) => a.id === id);
   }
+
   static async loginWithCreds(username, password) {
     const requester = new Requester();
     const response = await requester.request(ENDPOINT_KEY.LOGIN, {

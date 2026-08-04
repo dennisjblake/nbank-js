@@ -8,6 +8,7 @@ import { expect, test } from '../../fixtures/baseUi.js';
 import AdminPanel from '../../pages/adminPanelPage.js';
 import { BankAlert } from '../../pages/bankAlert.js';
 import URL from '../../pages/url.js';
+import ROLE from '../../../seniorTests/utils/roles';
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
@@ -42,7 +43,7 @@ test.describe('Auth Service Tests', () => {
     await userRow.first().scrollIntoViewIfNeeded();
 
     await expect(
-      userRow.first().getByText('USER', { exact: true }),
+      userRow.first().getByText(ROLE.USER, { exact: true }),
     ).toBeVisible();
 
     const { status, responseData } = await AdminSteps.getAllUsers();

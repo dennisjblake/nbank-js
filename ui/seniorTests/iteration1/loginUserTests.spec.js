@@ -19,12 +19,14 @@ test.describe('Login Service Tests', () => {
     const adminPanel = new AdminPanel(page);
     await adminPanel.expectAdminPanelVisible();
   });
+
   test('user should be able to login with correct credentials', async ({
     page,
   }) => {
     const { requestData, status } = await AdminSteps.createUser();
-    const { username, password } = requestData;
     expect(status).toBe(HttpStatusCode.Created);
+    const { username, password } = requestData;
+
     const loginPage = new LoginPage(page);
     await loginPage.open();
     await loginPage.login(username, password);

@@ -1,6 +1,5 @@
 import { test as base } from 'playwright/test';
 import { UserSteps } from '../../seniorTests/utils/steps/userSteps';
-import { use } from 'react';
 
 function createSessionStorage() {
   const map = new Map();
@@ -48,7 +47,7 @@ function createSessionStorage() {
 export const test = base.extend({
   sessionStorage: [
     async ({}, use) => {
-      const store = sessionStorage();
+      const store = createSessionStorage();
       await use(store);
       store.clear();
     },
