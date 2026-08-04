@@ -6,6 +6,7 @@ import {
 } from '../../../seniorTests/generators/randomData.js';
 import { AdminSteps } from '../../../seniorTests/utils/steps/adminSteps.js';
 import { UserSteps } from '../../../seniorTests/utils/steps/userSteps.js';
+import BANK_STRINGS from '../../pages/bankStrings.js';
 
 test.describe('UI Name Change Tests', () => {
   test('user can change name to correct value', async ({ page }) => {
@@ -137,7 +138,9 @@ test.describe('UI Name Change Tests', () => {
     await expect(page).toHaveURL('/dashboard');
     const welcome = page.locator('.welcome-text');
     await expect(welcome).toBeVisible();
-    await expect(welcome).toHaveText(`Welcome, noname!`);
+    await expect(welcome).toHaveText(
+      `Welcome, ${BANK_STRINGS.DEFAULT_NONAME}!`,
+    );
 
     // check the API result
     const { status: customerProfileStatus, data: customerProfileResponse } =

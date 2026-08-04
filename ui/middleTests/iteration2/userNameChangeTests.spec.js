@@ -10,6 +10,7 @@ import { BankAlert } from '../../pages/bankAlert.js';
 import EditProfile from '../../pages/editProfilePage.js';
 import URL from '../../pages/url.js';
 import UserDashboard from '../../pages/userDashboard.js';
+import BANK_STRINGS from '../../pages/bankStrings.js';
 
 test.describe('UI Name Change Tests', () => {
   test('user can change name to correct value', async ({
@@ -64,7 +65,7 @@ test.describe('UI Name Change Tests', () => {
     );
     await editProfile.navigateToUserDashboad();
     await userDashboard.expectLoaded();
-    await userDashboard.expectWelcomeTextToContain('noname');
+    await userDashboard.expectWelcomeTextToContain(BANK_STRINGS.DEFAULT_NONAME);
 
     // check the API result
     const { status: customerProfileStatus, data: customerProfileResponse } =

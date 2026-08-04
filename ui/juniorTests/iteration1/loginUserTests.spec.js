@@ -1,5 +1,6 @@
 import { test, expect } from 'playwright/test';
 import { AdminSteps } from '../../../seniorTests/utils/steps/adminSteps.js';
+import BANK_STRINGS from '../../pages/bankStrings.js';
 
 test.describe('AuthService Tests', () => {
   test('user should be able to login after creation', async ({ page }) => {
@@ -12,7 +13,9 @@ test.describe('AuthService Tests', () => {
 
     const welcome = page.locator('.welcome-text');
     await expect(welcome).toBeVisible();
-    await expect(welcome).toHaveText('Welcome, noname!');
+    await expect(welcome).toHaveText(
+      `Welcome, ${BANK_STRINGS.DEFAULT_NONAME}!`,
+    );
   });
 
   test('admin should be able to login with correct credentials', async ({
