@@ -22,35 +22,19 @@ describe('API Transfer Tests', () => {
       const { token } = await AdminSteps.createUserAndLogin();
 
       // Create account 1
-      const { responseData: account1CreateData, status: account1CreateStatus } =
+      const { responseData: account1CreateData } =
         await UserSteps.createAccount(token);
-
-      expect(account1CreateStatus).to.equal(HTTP_STATUS.CREATED);
-      expect(account1CreateData.accountNumber).to.exist;
 
       // Create account 2
-      const { responseData: account2CreateData, status: account2CreateStatus } =
+      const { responseData: account2CreateData } =
         await UserSteps.createAccount(token);
 
-      expect(account2CreateStatus).to.equal(HTTP_STATUS.CREATED);
-      expect(account2CreateData.accountNumber).to.exist;
-
       // deposit money 2 times to account 1
-      await UserSteps.deposit(
-        account1CreateData.id,
-        ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
+      const { data: depositResponse } = await UserSteps.depositSmart(
+        account1CreateData,
+        ACCOUNT_VALUE.VALUE_10K,
         token,
       );
-      const { status: depositStatus, data: depositResponse } =
-        await UserSteps.deposit(
-          account1CreateData.id,
-          ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
-          token,
-        );
-
-      expect(depositStatus).to.equal(HTTP_STATUS.OK);
-      expect(depositResponse['balance']).to.equal(ACCOUNT_VALUE.VALUE_10K);
-      await assertThatModels(account1CreateData, depositResponse).match();
 
       // transfer money
       const { status: transferStatus, data: transferResponse } =
@@ -100,45 +84,22 @@ describe('API Transfer Tests', () => {
       const { token: authTokenUser1 } = await AdminSteps.createUserAndLogin();
 
       // create account 1 for user 1
-      const {
-        responseData: createAccount1User1Response,
-        status: createAccount1User1Status,
-      } = await UserSteps.createAccount(authTokenUser1);
-
-      expect(createAccount1User1Status).to.equal(HTTP_STATUS.CREATED);
-      expect(createAccount1User1Response.accountNumber).to.exist;
+      const { responseData: createAccount1User1Response } =
+        await UserSteps.createAccount(authTokenUser1);
 
       // create user 2
       const { token: authTokenUser2 } = await AdminSteps.createUserAndLogin();
 
       // create account 1 for user 2
-      const {
-        responseData: createAccount1User2Response,
-        status: createAccount1User2Status,
-      } = await UserSteps.createAccount(authTokenUser2);
-
-      expect(createAccount1User2Status).to.equal(HTTP_STATUS.CREATED);
-      expect(createAccount1User2Response.accountNumber).to.exist;
+      const { responseData: createAccount1User2Response } =
+        await UserSteps.createAccount(authTokenUser2);
 
       // deposit money 2 times to account 1 user 1
-      await UserSteps.deposit(
-        createAccount1User1Response.id,
-        ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
+      const { data: depositResponse } = await UserSteps.depositSmart(
+        createAccount1User1Response,
+        ACCOUNT_VALUE.VALUE_10K,
         authTokenUser1,
       );
-      const { status: depositStatus, data: depositResponse } =
-        await UserSteps.deposit(
-          createAccount1User1Response.id,
-          ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
-          authTokenUser1,
-        );
-
-      expect(depositStatus).to.equal(HTTP_STATUS.OK);
-      expect(depositResponse['balance']).to.equal(ACCOUNT_VALUE.VALUE_10K);
-      await assertThatModels(
-        createAccount1User1Response,
-        depositResponse,
-      ).match();
 
       // transfer money
       const { status: transferStatus, data: transferResponse } =
@@ -205,40 +166,19 @@ describe('API Transfer Tests', () => {
       const { token } = await AdminSteps.createUserAndLogin();
 
       // Create account 1
-      const { responseData: account1CreateData, status: account1CreateStatus } =
+      const { responseData: account1CreateData } =
         await UserSteps.createAccount(token);
-
-      expect(account1CreateStatus).to.equal(HTTP_STATUS.CREATED);
-      expect(account1CreateData.accountNumber).to.exist;
 
       // Create account 2
-      const { responseData: account2CreateData, status: account2CreateStatus } =
+      const { responseData: account2CreateData } =
         await UserSteps.createAccount(token);
 
-      expect(account2CreateStatus).to.equal(HTTP_STATUS.CREATED);
-      expect(account2CreateData.accountNumber).to.exist;
-
       // deposit money 3 times to account 1
-      await UserSteps.deposit(
-        account1CreateData.id,
-        ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
+      const { data: depositResponse } = await UserSteps.depositSmart(
+        account1CreateData,
+        ACCOUNT_VALUE.VALUE_15K,
         token,
       );
-      await UserSteps.deposit(
-        account1CreateData.id,
-        ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
-        token,
-      );
-      const { status: depositStatus, data: depositResponse } =
-        await UserSteps.deposit(
-          account1CreateData.id,
-          ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
-          token,
-        );
-
-      expect(depositStatus).to.equal(HTTP_STATUS.OK);
-      expect(depositResponse['balance']).to.equal(ACCOUNT_VALUE.VALUE_15K);
-      await assertThatModels(account1CreateData, depositResponse).match();
 
       // transfer money
       await UserSteps.transferWithError(
@@ -279,18 +219,12 @@ describe('API Transfer Tests', () => {
     const { token } = await AdminSteps.createUserAndLogin();
 
     // Create account 1
-    const { responseData: account1CreateData, status: account1CreateStatus } =
+    const { responseData: account1CreateData } =
       await UserSteps.createAccount(token);
-
-    expect(account1CreateStatus).to.equal(HTTP_STATUS.CREATED);
-    expect(account1CreateData.accountNumber).to.exist;
 
     // Create account 2
-    const { responseData: account2CreateData, status: account2CreateStatus } =
+    const { responseData: account2CreateData } =
       await UserSteps.createAccount(token);
-
-    expect(account2CreateStatus).to.equal(HTTP_STATUS.CREATED);
-    expect(account2CreateData.accountNumber).to.exist;
 
     // transfer money
     await UserSteps.transferWithError(
@@ -335,37 +269,19 @@ describe('API Transfer Tests', () => {
     const { token: authTokenUser3 } = await AdminSteps.createUserAndLogin();
 
     // create account 1 for user 2
-    const {
-      responseData: createAccount1User2Response,
-      status: createAccount1User2Status,
-    } = await UserSteps.createAccount(authTokenUser2);
-
-    expect(createAccount1User2Status).to.equal(HTTP_STATUS.CREATED);
-    expect(createAccount1User2Response.accountNumber).to.exist;
+    const { responseData: createAccount1User2Response } =
+      await UserSteps.createAccount(authTokenUser2);
 
     // create account 1 for user 3
-    const {
-      responseData: createAccount1User3Response,
-      status: createAccount1User3Status,
-    } = await UserSteps.createAccount(authTokenUser3);
-
-    expect(createAccount1User3Status).to.equal(HTTP_STATUS.CREATED);
-    expect(createAccount1User3Response.accountNumber).to.exist;
+    const { responseData: createAccount1User3Response } =
+      await UserSteps.createAccount(authTokenUser3);
 
     // deposit money 1 time to account 1 user 2
-    const { status: depositStatus, data: depositResponse } =
-      await UserSteps.deposit(
-        createAccount1User2Response.id,
-        ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
-        authTokenUser2,
-      );
-
-    expect(depositStatus).to.equal(HTTP_STATUS.OK);
-    expect(depositResponse['balance']).to.equal(ACCOUNT_VALUE.VALUE_5K);
-    await assertThatModels(
+    const { data: depositResponse } = await UserSteps.depositSmart(
       createAccount1User2Response,
-      depositResponse,
-    ).match();
+      ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
+      authTokenUser2,
+    );
 
     // transfer money
     await UserSteps.transferWithError(
@@ -411,42 +327,21 @@ describe('API Transfer Tests', () => {
     const { token: authTokenUser2 } = await AdminSteps.createUserAndLogin();
 
     // create account 1 for user 1
-    const {
-      responseData: createAccount1User1Response,
-      status: createAccount1User1Status,
-    } = await UserSteps.createAccount(authTokenUser1);
-
-    expect(createAccount1User1Status).to.equal(HTTP_STATUS.CREATED);
-    expect(createAccount1User1Response.accountNumber).to.exist;
+    const { responseData: createAccount1User1Response } =
+      await UserSteps.createAccount(authTokenUser1);
 
     // create account 1 for user 2
-    const {
-      responseData: createAccount1User2Response,
-      status: createAccount1User2Status,
-    } = await UserSteps.createAccount(authTokenUser2);
-
-    expect(createAccount1User2Status).to.equal(HTTP_STATUS.CREATED);
-    expect(createAccount1User2Response.accountNumber).to.exist;
+    const { responseData: createAccount1User2Response } =
+      await UserSteps.createAccount(authTokenUser2);
 
     // deposit money 5000 to account 1 user 2
-    const { status: depositStatus, data: depositResponse } =
-      await UserSteps.deposit(
-        createAccount1User2Response.id,
-        ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
-        authTokenUser2,
-      );
-
-    expect(depositStatus).to.equal(HTTP_STATUS.OK);
-    expect(depositResponse['balance']).to.equal(
-      ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
-    );
-    await assertThatModels(
+    const { data: depositResponse } = await UserSteps.depositSmart(
       createAccount1User2Response,
-      depositResponse,
-    ).match();
+      ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
+      authTokenUser2,
+    );
 
     // transfer money
-
     await UserSteps.transferWithError(
       createAccount1User2Response.id,
       createAccount1User1Response.id,
@@ -487,25 +382,15 @@ describe('API Transfer Tests', () => {
     const { token } = await AdminSteps.createUserAndLogin();
 
     // Create an account 1
-    const { responseData: account1CreateData, status: account1CreateStatus } =
+    const { responseData: account1CreateData } =
       await UserSteps.createAccount(token);
 
-    expect(account1CreateStatus).to.equal(HTTP_STATUS.CREATED);
-    expect(account1CreateData.accountNumber).to.exist;
-
     // deposit 5000 to account 1
-    const { status: depositStatus, data: depositResponse } =
-      await UserSteps.deposit(
-        account1CreateData.id,
-        ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
-        token,
-      );
-
-    expect(depositStatus).to.equal(HTTP_STATUS.OK);
-    expect(depositResponse['balance']).to.equal(
+    const { data: depositResponse } = await UserSteps.depositSmart(
+      account1CreateData,
       ACCOUNT_VALUE.DEPOSIT_MAX_VALUE,
+      token,
     );
-    await assertThatModels(account1CreateData, depositResponse).match();
 
     // transfer money
     const { status: transferStatus, data: transferResponse } =
