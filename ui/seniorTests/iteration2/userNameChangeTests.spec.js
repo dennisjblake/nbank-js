@@ -71,7 +71,7 @@ test.describe('UI Name Change Tests', () => {
 
     // check the API result
     const { data: customerProfileResponse } = await steps.getProfileInfo();
-    expect(customerProfileResponse.name).toBe(null);
+    expect(customerProfileResponse.name).toBeNull();
   });
   test('user cannot change name to the same value', async ({
     page,

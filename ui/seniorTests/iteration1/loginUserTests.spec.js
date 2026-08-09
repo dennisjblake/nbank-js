@@ -4,6 +4,7 @@ import { AdminSteps } from '../../../seniorTests/utils/steps/adminSteps.js';
 import AdminPanel from '../../pages/adminPanelPage.js';
 import LoginPage from '../../pages/loginPage.js';
 import UserDashboard from '../../pages/userDashboard.js';
+import BANK_STRINGS from '../../pages/bankStrings.js';
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
@@ -33,6 +34,6 @@ test.describe('Login Service Tests', () => {
 
     const userDashboard = new UserDashboard(page);
     await userDashboard.expectLoaded();
-    await userDashboard.expectWelcomeTextToContain('noname');
+    await userDashboard.expectWelcomeTextToContain(BANK_STRINGS.NONAME);
   });
 });
