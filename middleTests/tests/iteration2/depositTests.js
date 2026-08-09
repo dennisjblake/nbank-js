@@ -7,6 +7,9 @@ import CustomerAccountsResponse from '../../models/customerAccountsResponse.js';
 import CustomerAccountsRequester from '../../requests/customerAccountsRequester.js';
 import ApiConfig from '../../utils/apiConfig.js';
 import { HttpStatusCode } from 'axios';
+import MESSAGE from '../../utils/message.js';
+import { randomDepositAmountWithDecimals } from '../../generators/randomData.js';
+import ACCOUNT_VALUE from '../../utils/accountValue.js';
 
 describe('API Deposit Tests', () => {
   const validAmounts = [
@@ -76,10 +79,10 @@ describe('API Deposit Tests', () => {
     });
   });
   const invalidAmounts = [
-    { amount: 0, errorMessage: 'Deposit amount must be at least 0.01' },
-    { amount: -1, errorMessage: 'Deposit amount must be at least 0.01' },
-    { amount: 5001, errorMessage: 'Deposit amount cannot exceed 5000' },
-    { amount: 5000.1, errorMessage: 'Deposit amount cannot exceed 5000' },
+    { amount: 0, errorMessage: MESSAGE.DEPOSIT_UNDER_LIMIT },
+    { amount: -1, errorMessage: MESSAGE.DEPOSIT_UNDER_LIMIT },
+    { amount: 5001, errorMessage: MESSAGE.DEPOSIT_OVER_LIMIT },
+    { amount: 5000.1, errorMessage: MESSAGE.DEPOSIT_OVER_LIMIT },
   ];
   invalidAmounts.forEach(({ amount, errorMessage }) => {
     it(`user cannot deposit incorrect amount "${amount}" into his account`, async () => {
@@ -124,11 +127,12 @@ describe('API Deposit Tests', () => {
   });
 
   const invalidAccounts = [
-    { account: 0, errorMessage: 'Unauthorized access to account' },
-    { account: -1, errorMessage: 'Unauthorized access to account' },
+    { account: 0, errorMessage: MESSAGE.UNAUTH_ACCESS },
+    { account: -1, errorMessage: MESSAGE.UNAUTH_ACCESS },
   ];
   invalidAccounts.forEach(({ account, errorMessage }) => {
     it(`user cannot deposit correct amount into non owned account "${account}" into his account`, async () => {
+      const amount = randomDepositAmountWithDecimals();
       // create a user
       const user = await new AdminCreateUserRequest().createUser();
       expect(user.status).to.equal(HttpStatusCode.Created);
@@ -151,13 +155,15 @@ describe('API Deposit Tests', () => {
       // Deposit
 
       const { status: depositStatus, responseData: depositResponse } =
-        await new DepositRequester().deposit(account, 100.0, authToken);
+        await new DepositRequester().deposit(account, amount, authToken);
 
       expect(depositStatus).equals(HttpStatusCode.Forbidden);
       expect(depositResponse).equal(errorMessage);
     });
   });
   it('admin cannot deposit correct amount into customer account', async () => {
+    const amount = randomDepositAmountWithDecimals();
+
     // create a user
     const user = await new AdminCreateUserRequest().createUser();
     expect(user.status).to.equal(HttpStatusCode.Created);
@@ -178,7 +184,7 @@ describe('API Deposit Tests', () => {
     const { status: depositStatus, responseData: depositResponse } =
       await new DepositRequester().deposit(
         createAccountResponse.id,
-        100.0,
+        amount,
         process.env.ADMIN_AUTH_TOKEN,
       );
 

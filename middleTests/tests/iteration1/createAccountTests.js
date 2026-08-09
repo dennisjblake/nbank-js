@@ -3,10 +3,11 @@ import { expect } from 'chai';
 import AdminCreateUserRequest from '../../requests/adminCreateUserRequest.js';
 import CreateAccountRequest from '../../requests/createAccountRequest.js';
 import GenerateTokenRequest from '../../requests/generateTokenRequest.js';
+import ROLE from '../../utils/roles.js';
 
 describe('Account Service Tests', function () {
   it('user should be able to create an account', async () => {
-    const user = await new AdminCreateUserRequest().createUser('USER');
+    const user = await new AdminCreateUserRequest().createUser(ROLE.USER);
     const loginRequest = await new GenerateTokenRequest().login({
       username: user.response.username,
       password: user.response.password,

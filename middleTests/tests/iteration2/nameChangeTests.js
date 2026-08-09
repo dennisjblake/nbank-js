@@ -4,6 +4,8 @@ import GenerateTokenRequest from '../../requests/generateTokenRequest.js';
 import NameChangeRequester from '../../requests/nameChangeRequester.js';
 import CustomerProfileRequest from '../../requests/customerProfileRequest.js';
 import { HttpStatusCode } from 'axios';
+import ROLE from '../../utils/roles.js';
+import MESSAGE from '../../utils/message.js';
 
 describe('API Name Change Tests', function () {
   const validData = [
@@ -27,10 +29,10 @@ describe('API Name Change Tests', function () {
         await new NameChangeRequester().changeName(name, authToken);
       expect(changeNameStatus).to.equal(HttpStatusCode.Ok);
       expect(changeNameResponse.message).to.equal(
-        'Profile updated successfully',
+        MESSAGE.PROFILE_UPDATED_SUCCESSFULLY,
       );
       expect(changeNameResponse.customer.name).to.equal(name);
-      expect(changeNameResponse.customer.role).to.equal('USER');
+      expect(changeNameResponse.customer.role).to.equal(ROLE.USER);
       expect(changeNameResponse.customer.username).to.equal(
         user.response.username,
       );
@@ -42,7 +44,7 @@ describe('API Name Change Tests', function () {
       expect(customerProfileStatus).to.equal(HttpStatusCode.Ok);
       expect(customerProfileResponse.name).to.equal(name);
       expect(customerProfileResponse.username).to.equal(user.response.username);
-      expect(customerProfileResponse.role).to.equal('USER');
+      expect(customerProfileResponse.role).to.equal(ROLE.USER);
     });
   });
 
@@ -77,9 +79,7 @@ describe('API Name Change Tests', function () {
       const { status: changeNameStatus, responseData: changeNameResponse } =
         await new NameChangeRequester().changeName(name, authToken);
       expect(changeNameStatus).to.equal(HttpStatusCode.BadRequest);
-      expect(changeNameResponse).to.equal(
-        'Name must contain two words with letters only',
-      );
+      expect(changeNameResponse).to.equal(MESSAGE.INCORRECT_NAME);
 
       const {
         status: customerProfileStatus,
@@ -88,7 +88,7 @@ describe('API Name Change Tests', function () {
       expect(customerProfileStatus).to.equal(HttpStatusCode.Ok);
       expect(customerProfileResponse.name).to.equal(null);
       expect(customerProfileResponse.username).to.equal(user.response.username);
-      expect(customerProfileResponse.role).to.equal('USER');
+      expect(customerProfileResponse.role).to.equal(ROLE.USER);
     });
   });
 });

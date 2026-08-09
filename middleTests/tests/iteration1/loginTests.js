@@ -2,13 +2,14 @@ import { HttpStatusCode } from 'axios';
 import { expect } from 'chai';
 import AdminCreateUserRequest from '../../requests/adminCreateUserRequest.js';
 import GenerateTokenRequest from '../../requests/generateTokenRequest.js';
+import ROLE from '../../utils/roles.js';
 
 describe('Auth Service Tests', function () {
   this.timeout(5000);
   it('should return admin auth token', async () => {
     const response = await new GenerateTokenRequest().login({
-      username: 'admin',
-      password: 'admin',
+      username: process.env.ADMIN_USERNAME,
+      password: process.env.ADMIN_PASSWORD,
     });
 
     expect(response.headers.Authorization).to.equal(
@@ -18,7 +19,7 @@ describe('Auth Service Tests', function () {
   });
 
   it('user should be able to login', async () => {
-    const user = await new AdminCreateUserRequest().createUser('USER');
+    const user = await new AdminCreateUserRequest().createUser(ROLE.USER);
 
     expect(user.status).to.equal(HttpStatusCode.Created);
     const loginUser = await new GenerateTokenRequest().login({
