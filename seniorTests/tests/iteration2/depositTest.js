@@ -1,8 +1,8 @@
+import { HttpStatusCode } from 'axios';
 import { expect } from 'chai';
 import { randomDepositAmountWithDecimals } from '../../generators/randomData.js';
 import { assertThatModels } from '../../models/comparison/modelAssertions.js';
 import ACCOUNT_VALUE from '../../utils/accountValue.js';
-import HTTP_STATUS from '../../utils/httpStatus.js';
 import MESSAGE from '../../utils/message.js';
 import { AdminSteps } from '../../utils/steps/adminSteps.js';
 import { UserSteps } from '../../utils/steps/userSteps.js';
@@ -20,28 +20,20 @@ describe('API Deposit Tests', () => {
     it(`user can deposit correct amount "${amount}" into his account`, async () => {
       // create a user
       const { token } = await AdminSteps.createUserAndLogin();
+      const steps = new UserSteps({ token });
 
       // Create an account
-      const { responseData: accountCreateData, status: accountCreateStatus } =
-        await UserSteps.createAccount(token);
-
-      expect(accountCreateStatus).to.equal(HTTP_STATUS.CREATED);
-      expect(accountCreateData.accountNumber).to.exist;
+      const { responseData: accountCreateData } = await steps.createAccount();
 
       // Deposit
-      const { status: depositStatus, data: depositResponse } =
-        await UserSteps.deposit(accountCreateData.id, amount, token);
-
-      expect(depositStatus).to.equal(HTTP_STATUS.OK);
-      expect(depositResponse['balance']).to.equal(amount);
-      expect(depositResponse['transactions'][0].amount).to.equal(amount);
-      expect(depositResponse['transactions'][0].type).to.equal('DEPOSIT');
-      await assertThatModels(accountCreateData, depositResponse).match();
+      const { data: depositResponse } = await steps.depositSmart(
+        accountCreateData,
+        amount,
+      );
 
       // verify account information
-      const accountAfterDeposit = await UserSteps.getAccountById(
+      const accountAfterDeposit = await steps.getAccountById(
         accountCreateData.id,
-        token,
       );
       expect(accountAfterDeposit.balance).to.equal(amount);
       await assertThatModels(accountCreateData, accountAfterDeposit).match();
@@ -57,27 +49,22 @@ describe('API Deposit Tests', () => {
     it(`user cannot deposit incorrect amount "${amount}" into his account`, async () => {
       // create a user
       const { token } = await AdminSteps.createUserAndLogin();
+      const steps = new UserSteps({ token });
 
       // Create an account
-      const { responseData: accountCreateData, status: accountCreateStatus } =
-        await UserSteps.createAccount(token);
-
-      expect(accountCreateStatus).to.equal(HTTP_STATUS.CREATED);
-      expect(accountCreateData.accountNumber).to.exist;
+      const { responseData: accountCreateData } = await steps.createAccount();
 
       // Deposit
-      await UserSteps.depositWithError(
-        accountCreateData.id,
-        amount,
-        token,
-        HTTP_STATUS.BAD_REQUEST,
-        errorMessage,
-      );
+      await steps.depositWithError({
+        accountId: accountCreateData.id,
+        amount: amount,
+        httpCode: HttpStatusCode.BadRequest,
+        errorMessage: errorMessage,
+      });
 
       // verify account information
-      const accountAfterDeposit = await UserSteps.getAccountById(
+      const accountAfterDeposit = await steps.getAccountById(
         accountCreateData.id,
-        token,
       );
       expect(accountAfterDeposit.balance).to.equal(ACCOUNT_VALUE.ZERO_VALUE);
       expect(accountAfterDeposit.id).to.equal(accountCreateData.id);
@@ -93,48 +80,40 @@ describe('API Deposit Tests', () => {
       const amount = randomDepositAmountWithDecimals();
       // create a user
       const { token } = await AdminSteps.createUserAndLogin();
+      const steps = new UserSteps({ token });
 
       // Create an account
-      const { responseData: accountCreateData, status: accountCreateStatus } =
-        await UserSteps.createAccount(token);
-
-      expect(accountCreateStatus).to.equal(HTTP_STATUS.CREATED);
-      expect(accountCreateData.accountNumber).to.exist;
+      const { responseData: accountCreateData } = await steps.createAccount();
 
       // Deposit
-      await UserSteps.depositWithError(
-        accountCreateData.id,
-        amount,
-        token,
-        HTTP_STATUS.FORBIDDEN,
-        errorMessage,
-      );
+      await steps.depositWithError({
+        accountId: accountCreateData.id,
+        amount: amount,
+        httpCode: HttpStatusCode.Forbidden,
+        errorMessage: errorMessage,
+      });
     });
   });
   it('admin cannot deposit correct amount into customer account', async () => {
     const amount = randomDepositAmountWithDecimals();
     // create a user
     const { token } = await AdminSteps.createUserAndLogin();
+    const steps = new UserSteps({ token });
 
     // Create an account
-    const { responseData: accountCreateData, status: accountCreateStatus } =
-      await UserSteps.createAccount(token);
-
-    expect(accountCreateStatus).to.equal(HTTP_STATUS.CREATED);
-    expect(accountCreateData.accountNumber).to.exist;
+    const { responseData: accountCreateData } = await steps.createAccount();
 
     // Deposit
-    await UserSteps.depositWithError(
-      accountCreateData.id,
-      amount,
-      process.env.ADMIN_AUTH_TOKEN,
-      HTTP_STATUS.UNAUTHORIZED,
-    );
+    await steps.depositWithError({
+      accountId: accountCreateData.id,
+      amount: amount,
+      token: process.env.ADMIN_AUTH_TOKEN,
+      httpCode: HttpStatusCode.Forbidden,
+    });
 
     // verify account information
-    const accountAfterDeposit = await UserSteps.getAccountById(
+    const accountAfterDeposit = await steps.getAccountById(
       accountCreateData.id,
-      token,
     );
     expect(accountAfterDeposit.balance).to.equal(ACCOUNT_VALUE.ZERO_VALUE);
     expect(accountAfterDeposit.id).to.equal(accountCreateData.id);

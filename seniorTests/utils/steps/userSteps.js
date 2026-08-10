@@ -10,6 +10,7 @@ import { ENDPOINT_KEY } from '../../utils/endpoints.js';
 import ErrorHandlingRequester from '../../utils/errorHandlingRequester.js';
 import ACCOUNT_VALUE from '../accountValue.js';
 import ApiConfig from '../apiConfig.js';
+import MESSAGE from '../message.js';
 import Requester from '../requester.js';
 
 export class UserSteps {
@@ -129,6 +130,7 @@ export class UserSteps {
     for (const chunkAmount of chunks) {
       lastResponse = await UserSteps.deposit(account.id, chunkAmount, token);
     }
+    expect(lastResponse.status).toBe(HttpStatusCode.Ok);
     expect(lastResponse.data['balance']).toBe(amount);
     await assertThatModels(account, lastResponse.data).match();
     return {
@@ -137,30 +139,36 @@ export class UserSteps {
     };
   }
 
-  static async transfer(senderAccountId, receiverAccountId, amount, auth) {
+  async transfer(senderAccount, receiverAccount, amount) {
+    const token = await this.ensureToken();
     const requester = new Requester();
     const response = await requester.request(ENDPOINT_KEY.TRANSFER, {
       data: new TransferRequest({
-        senderAccountId: senderAccountId,
-        receiverAccountId: receiverAccountId,
+        senderAccountId: senderAccount.id,
+        receiverAccountId: receiverAccount.id,
         amount: amount,
       }),
-      config: ApiConfig.getUserAuth(auth),
+      config: ApiConfig.getUserAuth(token),
     });
+    expect(response.status).toBe(HttpStatusCode.Ok);
+    expect(response.data.senderAccountId).toBe(senderAccount.id);
+    expect(response.data.receiverAccountId).toBe(receiverAccount.id);
+    expect(response.data.amount).toBe(amount);
+    expect(response.data.message).toBe(MESSAGE.TRANSFER_SUCCESS_MESSAGE);
     return {
       data: response.data,
       status: response.status,
     };
   }
 
-  static async transferWithError(
+  async transferWithError(
     senderAccountId,
     receiverAccountId,
     amount,
     httpCode,
     errorMessage,
-    auth,
   ) {
+    const token = await this.ensureToken();
     const errorRequest = new ErrorHandlingRequester();
 
     const expectedError = new ExpectedError({
@@ -171,22 +179,29 @@ export class UserSteps {
 
     await errorRequest.requestExpectingError(ENDPOINT_KEY.TRANSFER, {
       data: new TransferRequest({
-        senderAccountId: senderAccountId,
-        receiverAccountId: receiverAccountId,
+        senderAccountId: senderAccountId.id,
+        receiverAccountId: receiverAccountId.id,
         amount: amount,
       }),
-      config: ApiConfig.getUserAuth(auth),
+      config: ApiConfig.getUserAuth(token),
       expectedError,
     });
   }
 
-  static async depositWithError(
+  async depositWithError({
     accountId,
     amount,
-    auth,
     httpCode,
     errorMessage = null,
-  ) {
+    token = null,
+  }) {
+    let flexConfig;
+    if (token === process.env.ADMIN_AUTH_TOKEN) {
+      flexConfig = ApiConfig.adminAuth;
+    } else {
+      token = await this.ensureToken();
+      flexConfig = ApiConfig.getUserAuth(token);
+    }
     const errorRequest = new ErrorHandlingRequester();
 
     const expectedError = new ExpectedError({
@@ -200,12 +215,13 @@ export class UserSteps {
         id: accountId,
         balance: amount,
       }),
-      config: ApiConfig.getUserAuth(auth),
+      config: flexConfig,
       expectedError,
     });
   }
 
-  static async changeProfileNameWithError(name, auth, httpCode, errorMessage) {
+  async changeProfileNameWithError(name, httpCode, errorMessage) {
+    const token = await this.ensureToken();
     const errorRequest = new ErrorHandlingRequester();
 
     const expectedError = new ExpectedError({
@@ -216,17 +232,19 @@ export class UserSteps {
 
     await errorRequest.requestExpectingError(ENDPOINT_KEY.CHANGE_PROFILE, {
       data: new NameChangeRequest({ name }),
-      config: ApiConfig.getUserAuth(auth),
+      config: ApiConfig.getUserAuth(token),
       expectedError,
     });
   }
 
-  static async getProfileInfo(auth) {
+  async getProfileInfo() {
+    const token = await this.ensureToken();
     const requester = new Requester();
     const response = await requester.request(ENDPOINT_KEY.GET_PROFILE, {
       data: null,
-      config: ApiConfig.getUserAuth(auth),
+      config: ApiConfig.getUserAuth(token),
     });
+    expect(response.status).toBe(HttpStatusCode.Ok);
     return {
       data: response.data,
       status: response.status,
@@ -283,6 +301,7 @@ export class UserSteps {
 
     expect(response.status).toBe(HttpStatusCode.Ok);
     expect(response.data.customer.name).toBe(name);
+    expect(response.data.message).toBe(MESSAGE.PROFILE_UPDATED_SUCCESSFULLY);
 
     return {
       data: response.data,
@@ -291,13 +310,13 @@ export class UserSteps {
   }
 
   static async getAccountById(id, auth) {
-    const { status: customerAccountStatus, data: customerAccountsResponse } =
+    const { data: customerAccountsResponse } =
       await UserSteps.getUserAccounts(auth);
     return customerAccountsResponse.find((a) => a.id === id);
   }
   async getAccountById(id) {
     const token = await this.ensureToken();
-    const { status: customerAccountStatus, data: customerAccountsResponse } =
+    const { data: customerAccountsResponse } =
       await UserSteps.getUserAccounts(token);
     return customerAccountsResponse.find((a) => a.id === id);
   }
@@ -307,6 +326,7 @@ export class UserSteps {
     const response = await requester.request(ENDPOINT_KEY.LOGIN, {
       data: new LoginUserRequest({ username, password }),
     });
+    expect(response.status).toBe(HttpStatusCode.Ok);
     return {
       token: response.headers.authorization,
       status: response.status,

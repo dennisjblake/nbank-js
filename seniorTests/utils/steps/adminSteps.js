@@ -31,6 +31,7 @@ export class AdminSteps {
         config: ApiConfig.adminAuth,
       },
     );
+    expect(responseCreateUser.status).toBe(HttpStatusCode.Created);
     const username = userData.username;
     const password = userData.password;
     const responseLogin = await requester.request(ENDPOINT_KEY.LOGIN, {
