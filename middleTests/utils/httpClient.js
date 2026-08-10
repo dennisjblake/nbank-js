@@ -1,7 +1,7 @@
 import axios from 'axios';
-import dotenv from 'dotenv';
+import { config } from 'dotenv';
 
-dotenv.config();
+config({ quiet: true });
 
 const backEndUrl = process.env.BACKEND_URL;
 
@@ -13,14 +13,42 @@ export default class HttpClient {
   }
 
   async get(url, config = {}) {
-    return this.client.get(url, config);
+    try {
+      return this.client.get(url, config);
+    } catch (error) {
+      if (error.response) {
+        throw new Error(
+          `Request failed with status code: ${error.response.status}`,
+        );
+      }
+      throw error;
+    }
   }
 
   async post(url, data, config) {
-    return this.client.post(url, data, config);
+    try {
+      return this.client.post(url, data, config);
+    } catch (error) {
+      if (error.response) {
+        throw new Error(
+          `Request failed with status code: ${error.response.status}`,
+        );
+      }
+      throw error;
+    }
   }
 
   async put(url, data, config) {
-    return this.client.put(url, data, config);
+    try {
+      return this.client.put(url, data, config);
+    } catch (error) {
+      if (error.response) {
+        throw {
+          message: `Request failed with status code: ${error.response.status}`,
+          response: error.response,
+        };
+      }
+      throw error;
+    }
   }
 }

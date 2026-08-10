@@ -1,12 +1,7 @@
-export default class DepositRequest {
-  constructor(id, balance) {
-    this.id = id;
-    this.balance = balance;
-  }
-  toJson() {
-    return {
-      id: this.id,
-      balance: this.balance,
-    };
+import BaseModel from './baseModel.js';
+
+export default class DepositRequest extends BaseModel {
+  constructor({ id, balance }) {
+    super({ id, balance });
   }
 }

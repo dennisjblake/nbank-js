@@ -1,10 +1,7 @@
-export default class LoginUserResponse {
-  constructor(username, role) {
-    this.username = username;
-    this.role = role;
-  }
+import BaseModel from './baseModel.js';
 
-  static fromJson(json) {
-    return new LoginUserResponse(json.username, json.role);
+export default class LoginUserResponse extends BaseModel {
+  constructor({ username, role }) {
+    super({ username, role });
   }
 }

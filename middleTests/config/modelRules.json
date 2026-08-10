@@ -1,0 +1,18 @@
+{
+  "CreateUserRequest": {
+    "target": "CreateUserResponse",
+    "fields": ["username", "role"]
+  },
+  "CreateUserResponse": {
+    "target": "CreateUserResponse",
+    "fields": ["username", "role"]
+  },
+  "CreateAccountResponse": {
+    "target": "CustomerAccountsResponse",
+    "fields": ["id", "accountNumber", "id = transactions.0.relatedAccountId"]
+  },
+  "CustomerAccountsResponse": {
+    "target": "CreateAccountResponse",
+    "fields": ["id", "accountNumber"]
+  }
+}

@@ -1,10 +1,7 @@
-export default class NameChangeRequest {
-  constructor(name) {
-    this.name = name;
-  }
-  static toJson() {
-    return {
-      name: this.name,
-    };
+import BaseModel from './baseModel.js';
+
+export default class NameChangeRequest extends BaseModel {
+  constructor({ name }) {
+    super({ name });
   }
 }

@@ -1,15 +1,8 @@
+import BaseModel from './baseModel.js';
 import Customer from './Customer.js';
 
-export default class NameChangeResponse {
-  constructor(customer, message) {
-    this.customer = customer;
-    this.message = message;
-  }
-
-  static fromJson(json) {
-    return new NameChangeResponse(
-      Customer.fromJson(json.customer),
-      json.message,
-    );
+export default class NameChangeResponse extends BaseModel {
+  constructor({ customer, message }) {
+    super({ customer, message });
   }
 }

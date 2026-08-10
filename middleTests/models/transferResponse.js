@@ -1,17 +1,7 @@
-export default class TransferResponse {
-  constructor(senderAccountId, receiverAccountId, amount, message) {
-    this.senderAccountId = senderAccountId;
-    this.receiverAccountId = receiverAccountId;
-    this.amount = amount;
-    this.message = message;
-  }
+import BaseModel from './baseModel.js';
 
-  static fromJson(json) {
-    return new TransferResponse(
-      json.senderAccountId,
-      json.receiverAccountId,
-      json.amount,
-      json.message,
-    );
+export default class TransferResponse extends BaseModel {
+  constructor({ senderAccountId, receiverAccountId, amount, message }) {
+    super({ senderAccountId, receiverAccountId, amount, message });
   }
 }

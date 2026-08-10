@@ -1,14 +1,7 @@
-export default class TransferRequest {
-  constructor(senderAccountId, receiverAccountId, amount) {
-    this.senderAccountId = senderAccountId;
-    this.receiverAccountId = receiverAccountId;
-    this.amount = amount;
-  }
-  toJson(){
-    return{
-        senderAccountId: this.senderAccountId,
-        receiverAccountId: this.receiverAccountId,
-        amount: this.amount
-    };
+import BaseModel from './baseModel.js';
+
+export default class TransferRequest extends BaseModel {
+  constructor({ senderAccountId, receiverAccountId, amount }) {
+    super({ senderAccountId, receiverAccountId, amount });
   }
 }

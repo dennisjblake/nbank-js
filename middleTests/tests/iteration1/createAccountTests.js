@@ -1,23 +1,12 @@
-import { HttpStatusCode } from 'axios';
-import { expect } from 'chai';
-import AdminCreateUserRequest from '../../requests/adminCreateUserRequest.js';
-import CreateAccountRequest from '../../requests/createAccountRequest.js';
-import GenerateTokenRequest from '../../requests/generateTokenRequest.js';
-import ROLE from '../../utils/roles.js';
+import { AdminSteps } from '../../utils/steps/adminSteps.js';
+import { UserSteps } from '../../utils/steps/userSteps.js';
 
-describe('Account Service Tests', function () {
-  it('user should be able to create an account', async () => {
-    const user = await new AdminCreateUserRequest().createUser(ROLE.USER);
-    const loginRequest = await new GenerateTokenRequest().login({
-      username: user.response.username,
-      password: user.response.password,
-    });
+describe('Accounts Service Tests', function () {
+  it('user should be able to create an account', async function () {
+    const { token } = await AdminSteps.createUserAndLogin();
+    const stepsUser1 = new UserSteps({ token });
 
-    const authToken = loginRequest.headers.Authorization;
-    const { status, responseData } =
-      await new CreateAccountRequest().createAccount(authToken);
-
-    expect(status).to.equal(HttpStatusCode.Created);
-    expect(responseData.accountNumber).to.be.a('string').and.not.empty;
+    // Account creation
+    await stepsUser1.createAccount();
   });
 });

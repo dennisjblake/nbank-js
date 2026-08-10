@@ -1,17 +1,7 @@
-export default class CreateAccountResponse {
-  constructor(accountNumber, balance, id, transactions) {
-    this.accountNumber = accountNumber;
-    this.balance = balance;
-    this.id = id;
-    this.transactions = transactions;
-  }
+import BaseModel from './baseModel.js';
 
-  static fromJson(json) {
-    return new CreateAccountResponse(
-      json.accountNumber,
-      json.balance,
-      json.id,
-      json.transactions || [],
-    );
+export default class CreateAccountResponse extends BaseModel {
+  constructor({ accountNumber, balance, id, transactions }) {
+    super({ accountNumber, balance, id, transactions });
   }
 }

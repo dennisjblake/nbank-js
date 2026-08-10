@@ -1,45 +1,24 @@
-export default class CreateUserRequest {
-  constructor(username, password, role = 'USER') {
-    this.username = username;
-    this.password = password;
-    this.role = role;
+import { generateDataForEntity } from '../generators/generateDataForEntity.js';
+import BaseModel from './baseModel.js';
+
+export default class CreateUserRequest extends BaseModel {
+  constructor({ username, password, role }) {
+    super({ username, password, role });
   }
 
-  static generateUserData(role = 'USER') {
-    const username = CreateUserRequest.generateUsername();
-    const password = CreateUserRequest.generatePassword();
-    return new CreateUserRequest(username, password, role);
+  static get validationRules() {
+    return {
+      username: { type: 'string', regex: /^[A-Za-z0-9]{3,15}$/ },
+      password: { type: 'string', regex: /^[A-Z]{3}[a-z]{4}[0-9]{3}[$%&]{2}$/ },
+      role: { type: 'string', regex: /^USER$/ },
+    };
   }
 
-  static generateUsername(length = 10) {
-    const allowedChars =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.';
-    let username = '';
-    for (let i = 0; i < length; i++) {
-      username += allowedChars.charAt(
-        Math.floor(Math.random() * allowedChars.length),
-      );
-    }
-    return username;
-  }
+  static generateUserData() {
+    const generatedData = generateDataForEntity(
+      CreateUserRequest.validationRules,
+    );
 
-  static generatePassword(length = 12) {
-    const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const lower = 'abcdefghijklmnopqrstuvwxyz';
-    const digits = '0123456789';
-    const specials = '!@#';
-    const all = lower + upper + digits + specials;
-    let password = [
-      lower[Math.floor(Math.random() * lower.length)],
-      upper[Math.floor(Math.random() * upper.length)],
-      digits[Math.floor(Math.random() * digits.length)],
-      specials[Math.floor(Math.random() * specials.length)],
-    ];
-
-    for (let i = password.length; i < length; i++) {
-      password.push(all[Math.floor(Math.random() * all.length)]);
-    }
-
-    return password.sort(() => Math.random() - 0.5).join('');
+    return new CreateUserRequest(generatedData);
   }
 }

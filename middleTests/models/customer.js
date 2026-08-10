@@ -1,21 +1,7 @@
-export default class Customer {
-  constructor(id, username, password, name, role, accounts) {
-    this.id = id;
-    this.username = username;
-    this.password = password;
-    this.name = name;
-    this.role = role;
-    this.accounts = accounts;
-  }
+import BaseModel from './baseModel.js';
 
-  static fromJson(json) {
-    return new Customer(
-      json.id,
-      json.username,
-      json.password,
-      json.name,
-      json.role,
-      json.accounts || [],
-    );
+export default class Customer extends BaseModel {
+  constructor({ id, username, password, name, role, accounts }) {
+    super({ id, username, password, name, role, accounts });
   }
 }

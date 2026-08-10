@@ -17,4 +17,13 @@ export default class ApiConfig {
       },
     };
   }
+
+  static getUserAuth(token) {
+    return {
+      headers: {
+        ...this.#defaultHeaders,
+        Authorization: `${token}`,
+      },
+    };
+  }
 }
