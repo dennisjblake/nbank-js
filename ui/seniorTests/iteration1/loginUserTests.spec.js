@@ -5,7 +5,6 @@ import AdminPanel from '../../pages/adminPanelPage.js';
 import LoginPage from '../../pages/loginPage.js';
 import UserDashboard from '../../pages/userDashboard.js';
 import BANK_STRINGS from '../../pages/bankStrings.js';
-import BANK_STRINGS from '../../pages/bankStrings.js';
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;

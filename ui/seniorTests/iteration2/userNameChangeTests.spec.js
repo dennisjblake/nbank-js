@@ -8,7 +8,6 @@ import BANK_STRINGS from '../../pages/bankStrings.js';
 import EditProfile from '../../pages/editProfilePage.js';
 import URL from '../../pages/url.js';
 import UserDashboard from '../../pages/userDashboard.js';
-import BANK_STRINGS from '../../pages/bankStrings.js';
 
 test.describe('UI Name Change Tests', () => {
   test('user can change name to correct value', async ({
