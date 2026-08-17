@@ -24,6 +24,7 @@
     "mocha": "^11.3.0"
   },
   "dependencies": {
-    "dotenv": "^17.4.2"
+    "dotenv": "^17.4.2",
+    "randexp": "^0.5.3"
   }
 }
