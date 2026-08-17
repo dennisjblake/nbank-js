@@ -1,6 +1,6 @@
 import RandExp from 'randexp';
 import CreateUserRequest from '../models/createUserRequest.js';
-import ROLE from '../utils/roles.js';
+import ROLE from '../../middleTests/utils/roles';
 
 export const generateUser = () => {
   const rules = CreateUserRequest.validationRules;
