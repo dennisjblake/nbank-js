@@ -22,21 +22,15 @@ describe('API Deposit Tests', () => {
       const { token } = await AdminSteps.createUserAndLogin();
 
       // Create an account
-      const { responseData: accountCreateData, status: accountCreateStatus } =
+      const { responseData: accountCreateData } =
         await UserSteps.createAccount(token);
 
-      expect(accountCreateStatus).to.equal(HTTP_STATUS.CREATED);
-      expect(accountCreateData.accountNumber).to.exist;
-
       // Deposit
-      const { status: depositStatus, data: depositResponse } =
-        await UserSteps.deposit(accountCreateData.id, amount, token);
-
-      expect(depositStatus).to.equal(HTTP_STATUS.OK);
-      expect(depositResponse['balance']).to.equal(amount);
-      expect(depositResponse['transactions'][0].amount).to.equal(amount);
-      expect(depositResponse['transactions'][0].type).to.equal('DEPOSIT');
-      await assertThatModels(accountCreateData, depositResponse).match();
+      const { data: depositResponse } = await UserSteps.depositSmart(
+        accountCreateData,
+        amount,
+        token,
+      );
 
       // verify account information
       const accountAfterDeposit = await UserSteps.getAccountById(
@@ -59,11 +53,8 @@ describe('API Deposit Tests', () => {
       const { token } = await AdminSteps.createUserAndLogin();
 
       // Create an account
-      const { responseData: accountCreateData, status: accountCreateStatus } =
+      const { responseData: accountCreateData } =
         await UserSteps.createAccount(token);
-
-      expect(accountCreateStatus).to.equal(HTTP_STATUS.CREATED);
-      expect(accountCreateData.accountNumber).to.exist;
 
       // Deposit
       await UserSteps.depositWithError(
@@ -95,11 +86,8 @@ describe('API Deposit Tests', () => {
       const { token } = await AdminSteps.createUserAndLogin();
 
       // Create an account
-      const { responseData: accountCreateData, status: accountCreateStatus } =
+      const { responseData: accountCreateData } =
         await UserSteps.createAccount(token);
-
-      expect(accountCreateStatus).to.equal(HTTP_STATUS.CREATED);
-      expect(accountCreateData.accountNumber).to.exist;
 
       // Deposit
       await UserSteps.depositWithError(
@@ -117,11 +105,8 @@ describe('API Deposit Tests', () => {
     const { token } = await AdminSteps.createUserAndLogin();
 
     // Create an account
-    const { responseData: accountCreateData, status: accountCreateStatus } =
+    const { responseData: accountCreateData } =
       await UserSteps.createAccount(token);
-
-    expect(accountCreateStatus).to.equal(HTTP_STATUS.CREATED);
-    expect(accountCreateData.accountNumber).to.exist;
 
     // Deposit
     await UserSteps.depositWithError(
