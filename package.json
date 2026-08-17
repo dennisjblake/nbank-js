@@ -19,9 +19,11 @@
   },
   "homepage": "https://github.com/dennisjblake/nbank-js#readme",
   "devDependencies": {
+    "@playwright/test": "^1.62.0",
     "axios": "^1.18.1",
     "chai": "^6.2.2",
-    "mocha": "^11.3.0"
+    "mocha": "^11.3.0",
+    "playwright": "^1.62.0"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

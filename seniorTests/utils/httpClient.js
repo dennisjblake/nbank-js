@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { config } from 'dotenv';
 
-config();
+config({ quiet: true });
 
 const backEndUrl = process.env.BACKEND_URL;
 
