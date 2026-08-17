@@ -1,5 +1,6 @@
 import { expect } from 'playwright/test';
 import BasePage from './basePage.js';
+import UserBadge from './elements/userBadge.js';
 import URL from './url.js';
 
 export default class AdminPanel extends BasePage {
@@ -13,12 +14,12 @@ export default class AdminPanel extends BasePage {
   get adminPanelMessage() {
     return this.page.getByText('Admin Panel', { exact: true });
   }
-  get allUsersSections() {
-    return this.page.getByText('All Users', { exact: true });
+  get listRoot() {
+    return this.page.getByText('All Users', { exact: true }).locator('..');
   }
 
-  allUsers() {
-    return this.allUsersSections.locator('..').locator('li');
+  get listItems() {
+    return this.listRoot.locator('li');
   }
 
   async createUser(username, password) {
@@ -33,19 +34,30 @@ export default class AdminPanel extends BasePage {
     return this;
   }
 
-  async expectUserVisible(username) {
-    const liExact = this.allUsers().filter({
-      has: this.page.getByText(username, { exact: true }),
-    });
-    await expect(liExact).toHaveCount(1);
+  async expectUserVisible(username, timeout = 10_000) {
+    const row = this.rowByUsername(username);
+    await expect(row).toHaveCount(1, { timeout });
     return this;
   }
 
-  async expectUserNotExists(username) {
-    const liExact = this.allUsers().filter({
-      has: this.page.getByText(username, { exact: true }),
-    });
-    await expect(liExact).toHaveCount(0);
+  async expectUserNotExists(username, timeout = 10_000) {
+    const row = this.rowByUsername(username);
+    await expect(row).toHaveCount(0, { timeout });
     return this;
+  }
+
+  rowByUsername(username) {
+    const escaped = username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return this.listItems.filter({
+      hasText: new RegExp(`^${escaped}(USER|ADMIN)?$`),
+    });
+  }
+
+  async getAllUsers() {
+    const count = await this.listItems.count();
+    return Array.from(
+      { length: count },
+      (_, i) => new UserBadge(this.listItems.nth(1)),
+    );
   }
 }

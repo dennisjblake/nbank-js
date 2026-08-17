@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: 'ui',
+  testDir: 'ui/seniorTests/',
   timeout: 30_000,
   expect: { timeout: 5000 },
   fullyParallel: true,

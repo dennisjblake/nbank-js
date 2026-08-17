@@ -1,8 +1,6 @@
 import { randomTransferAmountWithDecimalsBelow } from '../../../seniorTests/generators/randomData.js';
 import { assertThatModels } from '../../../seniorTests/models/comparison/modelAssertions.js';
 import ACCOUNT_VALUE from '../../../seniorTests/utils/accountValue.js';
-import { AdminSteps } from '../../../seniorTests/utils/steps/adminSteps.js';
-import { UserSteps } from '../../../seniorTests/utils/steps/userSteps.js';
 import { expect, test } from '../../fixtures/baseUi.js';
 import { BankAlert } from '../../pages/bankAlert.js';
 import TransferPage from '../../pages/transferPage.js';
@@ -15,32 +13,34 @@ const TRANSFER_ALERT_RE =
 test.describe('UI Transfer Tests', () => {
   test('user can transfer correct amount from his account into other customer user account', async ({
     page,
-    authAsUser,
+    withUserSession,
+    authWithToken,
   }) => {
-    // Create user1 and user2
     const transferAmount = randomTransferAmountWithDecimalsBelow(
       ACCOUNT_VALUE.VALUE_10K,
     );
-    const { token: user1token } = await AdminSteps.createUserAndLogin();
-    const { token: user2token } = await AdminSteps.createUserAndLogin();
+    // Create user1 and user2
+    const [session1, session2] = await withUserSession(2);
+
+    const { steps: user1steps, token: user1token } = session1;
+    const { steps: user2steps, token: user2token } = session2;
 
     // Create an account1 for user1
     const { responseData: account1user1CreateData } =
-      await UserSteps.createAccount(user1token);
+      await user1steps.createAccount();
 
     // Create an account2 for user2
     const { responseData: account1user2CreateData } =
-      await UserSteps.createAccount(user2token);
+      await user2steps.createAccount();
 
     // Deposit 10k into account1 for user1
-    await UserSteps.depositSmart(
+    await user1steps.depositSmart(
       account1user1CreateData,
       ACCOUNT_VALUE.VALUE_10K,
-      user1token,
     );
 
     // login
-    await authAsUser({ token: user1token, goto: URL.DASHBOARD });
+    await authWithToken({ token: user1token, goto: URL.DASHBOARD });
     const userDashboard = new UserDashboard(page);
     await userDashboard.expectLoaded();
 
@@ -61,13 +61,11 @@ test.describe('UI Transfer Tests', () => {
 
     // check the API result
     // verify account information
-    const senderAccount = await UserSteps.getAccountById(
+    const senderAccount = await user1steps.getAccountById(
       account1user1CreateData.id,
-      user1token,
     );
-    const receiverAccount = await UserSteps.getAccountById(
+    const receiverAccount = await user2steps.getAccountById(
       account1user2CreateData.id,
-      user2token,
     );
 
     await assertThatModels(senderAccount, account1user1CreateData).match();
@@ -81,31 +79,29 @@ test.describe('UI Transfer Tests', () => {
 
   test('user can transfer correct amount from his account into his account', async ({
     page,
-    authAsUser,
+    withUserSession,
+    authWithToken,
   }) => {
-    // Create user1
     const transferAmount = randomTransferAmountWithDecimalsBelow(
       ACCOUNT_VALUE.VALUE_10K,
     );
-    const { token: user1token } = await AdminSteps.createUserAndLogin();
+    // Create user1
+    const [session] = await withUserSession(1);
+    const { steps, token } = session;
 
     // Create an account1 for user1
     const { responseData: account1user1CreateData } =
-      await UserSteps.createAccount(user1token);
+      await steps.createAccount();
 
     // Create an account2 for user1
     const { responseData: account2user1CreateData } =
-      await UserSteps.createAccount(user1token);
+      await steps.createAccount();
 
     // Deposit into account1 for user1
-    await UserSteps.depositSmart(
-      account1user1CreateData,
-      ACCOUNT_VALUE.VALUE_10K,
-      user1token,
-    );
+    await steps.depositSmart(account1user1CreateData, ACCOUNT_VALUE.VALUE_10K);
 
     // login
-    await authAsUser({ token: user1token, goto: URL.DASHBOARD });
+    await authWithToken({ token, goto: URL.DASHBOARD });
     const userDashboard = new UserDashboard(page);
     await userDashboard.expectLoaded();
 
@@ -126,47 +122,41 @@ test.describe('UI Transfer Tests', () => {
 
     // check the API result
     // verify account information
-    const senderAccount = await UserSteps.getAccountById(
+    const senderAccount = await steps.getAccountById(
       account1user1CreateData.id,
-      user1token,
     );
-    const receiverAccount = await UserSteps.getAccountById(
+    const receiverAccount = await steps.getAccountById(
       account2user1CreateData.id,
-      user1token,
     );
-
     await assertThatModels(senderAccount, account1user1CreateData).match();
     expect(senderAccount.balance).toBe(
       ACCOUNT_VALUE.VALUE_10K - transferAmount,
     );
-
     await assertThatModels(receiverAccount, account2user1CreateData).match();
     expect(receiverAccount.balance).toBe(transferAmount);
   });
 
   test('user cannot transfer correct amount from his account to incorrect account', async ({
     page,
-    authAsUser,
+    withUserSession,
+    authWithToken,
   }) => {
-    // Create user1
     const transferAmount = randomTransferAmountWithDecimalsBelow(
       ACCOUNT_VALUE.VALUE_10K,
     );
-    const { token: user1token } = await AdminSteps.createUserAndLogin();
+    // Create user1
+    const [session] = await withUserSession(1);
+    const { steps, token } = session;
 
     // Create an account1 for user1
     const { responseData: account1user1CreateData } =
-      await UserSteps.createAccount(user1token);
+      await steps.createAccount();
 
     // Deposit into account1 for user1
-    await UserSteps.depositSmart(
-      account1user1CreateData,
-      ACCOUNT_VALUE.VALUE_10K,
-      user1token,
-    );
+    await steps.depositSmart(account1user1CreateData, ACCOUNT_VALUE.VALUE_10K);
 
     // login
-    await authAsUser({ token: user1token, goto: URL.DASHBOARD });
+    await authWithToken({ token, goto: URL.DASHBOARD });
     const userDashboard = new UserDashboard(page);
     await userDashboard.expectLoaded();
 
@@ -186,9 +176,8 @@ test.describe('UI Transfer Tests', () => {
 
     // check the API result
     // verify account information
-    const senderAccount = await UserSteps.getAccountById(
+    const senderAccount = await steps.getAccountById(
       account1user1CreateData.id,
-      user1token,
     );
 
     await assertThatModels(senderAccount, account1user1CreateData).match();
@@ -197,24 +186,26 @@ test.describe('UI Transfer Tests', () => {
 
   test('user cannot transfer with leaving negative balance', async ({
     page,
-    authAsUser,
+    withUserSession,
+    authWithToken,
   }) => {
-    // Create user1
     const transferAmount = randomTransferAmountWithDecimalsBelow(
       ACCOUNT_VALUE.VALUE_10K,
     );
-    const { token: user1token } = await AdminSteps.createUserAndLogin();
+    // Create user1
+    const [session] = await withUserSession(1);
+    const { steps, token } = session;
 
     // Create an account1 for user1
     const { responseData: account1user1CreateData } =
-      await UserSteps.createAccount(user1token);
+      await steps.createAccount();
 
     // Create an account2 for user1
     const { responseData: account2user1CreateData } =
-      await UserSteps.createAccount(user1token);
+      await steps.createAccount();
 
     // login
-    await authAsUser({ token: user1token, goto: URL.DASHBOARD });
+    await authWithToken({ token, goto: URL.DASHBOARD });
     const userDashboard = new UserDashboard(page);
     await userDashboard.expectLoaded();
 
@@ -234,34 +225,32 @@ test.describe('UI Transfer Tests', () => {
 
     // check the API result
     // verify account information
-    const senderAccount = await UserSteps.getAccountById(
+    const senderAccount = await steps.getAccountById(
       account1user1CreateData.id,
-      user1token,
     );
-    const receiverAccount = await UserSteps.getAccountById(
+    const receiverAccount = await steps.getAccountById(
       account2user1CreateData.id,
-      user1token,
     );
-
     await assertThatModels(senderAccount, account1user1CreateData).match();
     expect(senderAccount.balance).toBe(ACCOUNT_VALUE.ZERO_VALUE);
-
     await assertThatModels(receiverAccount, account2user1CreateData).match();
     expect(receiverAccount.balance).toBe(ACCOUNT_VALUE.ZERO_VALUE);
   });
 
   test('user cannot transfer without filling out all fields and confirmation', async ({
     page,
-    authAsUser,
+    withUserSession,
+    authWithToken,
   }) => {
-    // Create user1
     const transferAmount = randomTransferAmountWithDecimalsBelow(
       ACCOUNT_VALUE.VALUE_10K,
     );
-    const { token: user1token } = await AdminSteps.createUserAndLogin();
+    // Create user1
+    const [session] = await withUserSession(1);
+    const { steps, token } = session;
 
     // login
-    await authAsUser({ token: user1token, goto: URL.DASHBOARD });
+    await authWithToken({ token, goto: URL.DASHBOARD });
     const userDashboard = new UserDashboard(page);
     await userDashboard.expectLoaded();
 
@@ -277,28 +266,26 @@ test.describe('UI Transfer Tests', () => {
 
   test('user cannot transfer invalid amount from his account into his account', async ({
     page,
-    authAsUser,
+    withUserSession,
+    authWithToken,
   }) => {
     // Create user1
-    const { token: user1token } = await AdminSteps.createUserAndLogin();
+    const [session] = await withUserSession(1);
+    const { steps, token } = session;
 
     // Create an account1 for user1
     const { responseData: account1user1CreateData } =
-      await UserSteps.createAccount(user1token);
+      await steps.createAccount();
 
     // Create an account2 for user1
     const { responseData: account2user1CreateData } =
-      await UserSteps.createAccount(user1token);
+      await steps.createAccount();
 
     // Deposit into account1 for user1
-    await UserSteps.depositSmart(
-      account1user1CreateData,
-      ACCOUNT_VALUE.VALUE_5K,
-      user1token,
-    );
+    await steps.depositSmart(account1user1CreateData, ACCOUNT_VALUE.VALUE_5K);
 
     // login
-    await authAsUser({ token: user1token, goto: URL.DASHBOARD });
+    await authWithToken({ token, goto: URL.DASHBOARD });
     const userDashboard = new UserDashboard(page);
     await userDashboard.expectLoaded();
 
@@ -318,18 +305,14 @@ test.describe('UI Transfer Tests', () => {
 
     // check the API result
     // verify account information
-    const senderAccount = await UserSteps.getAccountById(
+    const senderAccount = await steps.getAccountById(
       account1user1CreateData.id,
-      user1token,
     );
-    const receiverAccount = await UserSteps.getAccountById(
+    const receiverAccount = await steps.getAccountById(
       account2user1CreateData.id,
-      user1token,
     );
-
     await assertThatModels(senderAccount, account1user1CreateData).match();
     expect(senderAccount.balance).toBe(ACCOUNT_VALUE.VALUE_5K);
-
     await assertThatModels(receiverAccount, account2user1CreateData).match();
     expect(receiverAccount.balance).toBe(ACCOUNT_VALUE.ZERO_VALUE);
   });

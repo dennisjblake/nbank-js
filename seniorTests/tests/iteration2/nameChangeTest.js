@@ -1,5 +1,5 @@
+import { HttpStatusCode } from 'axios';
 import { expect } from 'chai';
-import HTTP_STATUS from '../../utils/httpStatus.js';
 import MESSAGE from '../../utils/message.js';
 import ROLE from '../../utils/roles.js';
 import { AdminSteps } from '../../utils/steps/adminSteps.js';
@@ -17,21 +17,17 @@ describe('API Name Change Tests', function () {
       // create user
       const { token, requestData, responseData } =
         await AdminSteps.createUserAndLogin();
-
+      const stepsUser1 = new UserSteps({ token });
       // change name
-      const { data, status } = await UserSteps.changeProfileName(name, token);
+      const { data } = await stepsUser1.changeProfileName(name);
 
-      expect(status).to.equal(HTTP_STATUS.OK);
-      expect(data.message).to.equal(MESSAGE.PROFILE_UPDATED_SUCCESSFULLY);
-      expect(data.customer.name).to.equal(name);
       expect(data.customer.role).to.equal(ROLE.USER);
       expect(data.customer.username).to.equal(requestData.username);
 
       // check the result
-      const { status: customerProfileStatus, data: customerProfileResponse } =
-        await UserSteps.getProfileInfo(token);
+      const { data: customerProfileResponse } =
+        await stepsUser1.getProfileInfo();
 
-      expect(customerProfileStatus).to.equal(HTTP_STATUS.OK);
       expect(customerProfileResponse.name).to.equal(name);
       expect(customerProfileResponse.username).to.equal(requestData.username);
       expect(customerProfileResponse.role).to.equal(ROLE.USER);
@@ -59,20 +55,18 @@ describe('API Name Change Tests', function () {
       // create user
       const { token, requestData, responseData } =
         await AdminSteps.createUserAndLogin();
-
+      const stepsUser1 = new UserSteps({ token });
       // change name - expect error
-      await UserSteps.changeProfileNameWithError(
+      await stepsUser1.changeProfileNameWithError(
         name,
-        token,
-        HTTP_STATUS.BAD_REQUEST,
+        HttpStatusCode.BadRequest,
         MESSAGE.INCORRECT_NAME,
       );
 
       // check the result - name should remain null
-      const { status: customerProfileStatus, data: customerProfileResponse } =
-        await UserSteps.getProfileInfo(token);
+      const { data: customerProfileResponse } =
+        await stepsUser1.getProfileInfo();
 
-      expect(customerProfileStatus).to.equal(HTTP_STATUS.OK);
       expect(customerProfileResponse.name).to.equal(null);
       expect(customerProfileResponse.username).to.equal(requestData.username);
       expect(customerProfileResponse.role).to.equal(ROLE.USER);

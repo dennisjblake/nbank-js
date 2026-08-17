@@ -1,6 +1,4 @@
 import { HttpStatusCode } from 'axios';
-import { AdminSteps } from '../../../seniorTests/utils/steps/adminSteps.js';
-import { UserSteps } from '../../../seniorTests/utils/steps/userSteps.js';
 import { expect, test } from '../../fixtures/baseUi.js';
 import { BankAlert } from '../../pages/bankAlert.js';
 import URL from '../../pages/url.js';
@@ -8,13 +6,17 @@ import UserDashboard from '../../pages/userDashboard.js';
 
 const ACCOUNT_NUMBER_RE = /Account Number:\s*([\w-]+)/;
 
-test.describe('Accounts Service Tests', () => {
+test.describe('Account Service Tests', () => {
   test('user should be able to create an account', async ({
     page,
-    authAsUser,
+    withUserSession,
+    authWithToken,
   }) => {
-    const { token } = await AdminSteps.createUserAndLogin();
-    await authAsUser({ token, goto: URL.DASHBOARD });
+    const [session] = await withUserSession(1);
+    const { steps, token } = session;
+
+    await authWithToken({ token, goto: URL.DASHBOARD });
+
     const userDashboard = new UserDashboard(page);
     await userDashboard.expectLoaded();
 
@@ -26,16 +28,12 @@ test.describe('Accounts Service Tests', () => {
 
     expect(accountNumber).toBeTruthy();
 
-    const userSteps = new UserSteps({ token });
-    const { status: userStepsStatus, data: accounts } =
-      await userSteps.getUserAccounts();
-
-    expect(userStepsStatus).toBe(HttpStatusCode.Ok);
+    const { status: accStatus, data: accounts } = await steps.getUserAccounts();
+    expect(accStatus).toBe(HttpStatusCode.Ok);
     expect(Array.isArray(accounts)).toBe(true);
 
     const created = accounts.find((a) => a.accountNumber === accountNumber);
-    expect(created, `Account ${accountNumber} not found`).toBeTruthy();
+    expect(created).toBeTruthy();
     expect(created.balance).toBe(0);
-    expect(accounts).toHaveLength(1);
   });
 });

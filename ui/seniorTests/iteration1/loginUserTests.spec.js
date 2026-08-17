@@ -1,6 +1,6 @@
 import { HttpStatusCode } from 'axios';
+import { expect, test } from 'playwright/test';
 import { AdminSteps } from '../../../seniorTests/utils/steps/adminSteps.js';
-import { expect, test } from '../../fixtures/baseUi.js';
 import AdminPanel from '../../pages/adminPanelPage.js';
 import LoginPage from '../../pages/loginPage.js';
 import UserDashboard from '../../pages/userDashboard.js';
@@ -20,18 +20,20 @@ test.describe('Login Service Tests', () => {
     const adminPanel = new AdminPanel(page);
     await adminPanel.expectAdminPanelVisible();
   });
+
   test('user should be able to login with correct credentials', async ({
     page,
   }) => {
     const { requestData, status } = await AdminSteps.createUser();
-    const { username, password } = requestData;
     expect(status).toBe(HttpStatusCode.Created);
+    const { username, password } = requestData;
+
     const loginPage = new LoginPage(page);
     await loginPage.open();
     await loginPage.login(username, password);
 
     const userDashboard = new UserDashboard(page);
     await userDashboard.expectLoaded();
-    await userDashboard.expectWelcomeTextToContain(BANK_STRINGS.DEFAULT_NONAME);
+    await userDashboard.expectWelcomeTextToContain(BANK_STRINGS.NONAME);
   });
 });

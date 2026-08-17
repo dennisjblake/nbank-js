@@ -1,20 +1,18 @@
-import { expect } from 'chai';
+import { HttpStatusCode } from 'axios';
 import { assertThatModels } from '../../models/comparison/modelAssertions.js';
 import CreateUserRequest from '../../models/createUserRequest.js';
 import ExpectedError from '../../models/expectedError.js';
 import ApiConfig from '../../utils/apiConfig.js';
 import { ENDPOINT_KEY } from '../../utils/endpoints.js';
 import ErrorHandlingRequester from '../../utils/errorHandlingRequester.js';
-import HTTP_STATUS from '../../utils/httpStatus.js';
 import MESSAGE from '../../utils/message.js';
 import ROLE from '../../utils/roles.js';
 import { AdminSteps } from '../../utils/steps/adminSteps.js';
+import { expect } from 'chai';
 
 describe('Admin Service Tests', function () {
   it('admin should be able to create a user', async () => {
-    const { requestData, responseData, status } = await AdminSteps.createUser();
-
-    expect(status).to.equal(HTTP_STATUS.CREATED);
+    const { requestData, responseData } = await AdminSteps.createUser();
 
     await assertThatModels(requestData, responseData).match();
   });
@@ -55,7 +53,7 @@ describe('Admin Service Tests', function () {
         const errorRequest = new ErrorHandlingRequester();
 
         const expectedError = new ExpectedError({
-          statusCode: HTTP_STATUS.BAD_REQUEST,
+          statusCode: HttpStatusCode.BadRequest,
           errorKey,
           errorMessage,
         });
@@ -65,6 +63,13 @@ describe('Admin Service Tests', function () {
           config: ApiConfig.adminAuth,
           expectedError,
         });
+
+        // API checking that user wasn't created
+        const { responseData: users } = await AdminSteps.getAllUsers();
+        const sameNameCount = users.filter(
+          (u) => u.username === username,
+        ).length;
+        expect(sameNameCount).to.equal(0);
       });
     },
   );

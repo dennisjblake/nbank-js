@@ -1,8 +1,6 @@
 import { randomDepositAmountWithDecimals } from '../../../seniorTests/generators/randomData.js';
 import { assertThatModels } from '../../../seniorTests/models/comparison/modelAssertions.js';
 import ACCOUNT_VALUE from '../../../seniorTests/utils/accountValue.js';
-import { AdminSteps } from '../../../seniorTests/utils/steps/adminSteps.js';
-import { UserSteps } from '../../../seniorTests/utils/steps/userSteps.js';
 import { expect, test } from '../../fixtures/baseUi.js';
 import { BankAlert } from '../../pages/bankAlert.js';
 import DepositMoney from '../../pages/depositMoneyPage.js';
@@ -15,23 +13,24 @@ const DEPOSIT_ALERT_RE =
 test.describe('UI Deposit Tests', () => {
   test('user can deposit correct amount into his account', async ({
     page,
-    authAsUser,
+    withUserSession,
+    authWithToken,
   }) => {
-    // Create user and login
-    const { token } = await AdminSteps.createUserAndLogin();
     const amount = randomDepositAmountWithDecimals();
+    // Create user and token
+    const [session] = await withUserSession(1);
+    const { steps, token } = session;
+
     // Create an account with API
-    const { responseData: accountCreateData } =
-      await UserSteps.createAccount(token);
+    const { responseData: accountCreateData } = await steps.createAccount();
 
     // login
-    await authAsUser({ token, goto: URL.DASHBOARD });
+    await authWithToken({ token, goto: URL.DASHBOARD });
     const userDashboard = new UserDashboard(page);
     await userDashboard.expectLoaded();
 
     // make a deposit
     await userDashboard.openDepositMoneyPage();
-
     const depositMoneyPage = new DepositMoney(page);
     await depositMoneyPage.expectLoaded();
     const alertText = await depositMoneyPage.checkAlertAndExtractAndAccept(
@@ -41,32 +40,32 @@ test.describe('UI Deposit Tests', () => {
     );
 
     // check the API result
-    const accountAfterDeposit = await UserSteps.getAccountById(
+    const accountAfterDeposit = await steps.getAccountById(
       accountCreateData.id,
-      token,
     );
     expect(accountAfterDeposit.balance).toBe(amount);
     await assertThatModels(accountCreateData, accountAfterDeposit).match();
   });
   test('user cannot deposit amount over limit into his account', async ({
     page,
-    authAsUser,
+    withUserSession,
+    authWithToken,
   }) => {
-    // Create user and login
-    const { token } = await AdminSteps.createUserAndLogin();
     const amount = ACCOUNT_VALUE.VALUE_15K;
+    // Create user and token
+    const [session] = await withUserSession(1);
+    const { steps, token } = session;
+
     // Create an account with API
-    const { responseData: accountCreateData } =
-      await UserSteps.createAccount(token);
+    const { responseData: accountCreateData } = await steps.createAccount();
 
     // login
-    await authAsUser({ token, goto: URL.DASHBOARD });
+    await authWithToken({ token, goto: URL.DASHBOARD });
     const userDashboard = new UserDashboard(page);
     await userDashboard.expectLoaded();
 
     // make a deposit
     await userDashboard.openDepositMoneyPage();
-
     const depositMoneyPage = new DepositMoney(page);
     await depositMoneyPage.expectLoaded();
     const alertText = await depositMoneyPage.checkAlertAndAccept(
@@ -75,31 +74,31 @@ test.describe('UI Deposit Tests', () => {
     );
 
     // check the API result
-    const accountAfterDeposit = await UserSteps.getAccountById(
+    const accountAfterDeposit = await steps.getAccountById(
       accountCreateData.id,
-      token,
     );
     expect(accountAfterDeposit.balance).toBe(ACCOUNT_VALUE.ZERO_VALUE);
   });
   test('user cannot deposit 0 amount into his account', async ({
     page,
-    authAsUser,
+    withUserSession,
+    authWithToken,
   }) => {
-    // Create user and login
     const amount = ACCOUNT_VALUE.ZERO_VALUE;
-    const { token } = await AdminSteps.createUserAndLogin();
+    // Create user and token
+    const [session] = await withUserSession(1);
+    const { steps, token } = session;
+
     // Create an account with API
-    const { responseData: accountCreateData } =
-      await UserSteps.createAccount(token);
+    const { responseData: accountCreateData } = await steps.createAccount();
 
     // login
-    await authAsUser({ token, goto: URL.DASHBOARD });
+    await authWithToken({ token, goto: URL.DASHBOARD });
     const userDashboard = new UserDashboard(page);
     await userDashboard.expectLoaded();
 
     // make a deposit
     await userDashboard.openDepositMoneyPage();
-
     const depositMoneyPage = new DepositMoney(page);
     await depositMoneyPage.expectLoaded();
     const alertText = await depositMoneyPage.checkAlertAndAccept(
@@ -108,29 +107,29 @@ test.describe('UI Deposit Tests', () => {
     );
 
     // check the API result
-    const accountAfterDeposit = await UserSteps.getAccountById(
+    const accountAfterDeposit = await steps.getAccountById(
       accountCreateData.id,
-      token,
     );
     expect(accountAfterDeposit.balance).toBe(ACCOUNT_VALUE.ZERO_VALUE);
   });
 
   test('user cannot make a deposit if an account is not selected', async ({
     page,
-    authAsUser,
+    withUserSession,
+    authWithToken,
   }) => {
-    // Create user and login
     const amount = randomDepositAmountWithDecimals();
-    const { token } = await AdminSteps.createUserAndLogin();
+    // Create user and token
+    const [session] = await withUserSession(1);
+    const { steps, token } = session;
 
     // login
-    await authAsUser({ token, goto: URL.DASHBOARD });
+    await authWithToken({ token, goto: URL.DASHBOARD });
     const userDashboard = new UserDashboard(page);
     await userDashboard.expectLoaded();
 
     // make a deposit
     await userDashboard.openDepositMoneyPage();
-
     const depositMoneyPage = new DepositMoney(page);
     await depositMoneyPage.expectLoaded();
     const alertText = await depositMoneyPage.checkAlertAndAccept(

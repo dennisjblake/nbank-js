@@ -32,7 +32,14 @@ export default class EditProfile extends BasePage {
   }
 
   async navigateToUserDashboad() {
+    const getProfilePromise = this.page.waitForResponse(
+      (response) =>
+        response.url().includes('profile') &&
+        response.request().method() === 'GET' &&
+        [HttpStatusCode.Ok].includes(response.status()),
+    );
     await this.homeButton.click();
+    await getProfilePromise;
   }
 
   async editProfileName(name) {

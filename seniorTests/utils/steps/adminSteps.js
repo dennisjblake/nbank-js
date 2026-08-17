@@ -1,10 +1,10 @@
-import Requester from '../requester.js';
-import ApiConfig from '../apiConfig.js';
-import CreateUserRequest from '../../models/createUserRequest.js';
-import { ENDPOINT_KEY } from '../endpoints.js';
-import LoginUserRequest from '../../models/loginUserRequest.js';
-import { expect } from 'playwright/test';
 import { HttpStatusCode } from 'axios';
+import { expect } from 'playwright/test';
+import CreateUserRequest from '../../models/createUserRequest.js';
+import LoginUserRequest from '../../models/loginUserRequest.js';
+import ApiConfig from '../apiConfig.js';
+import { ENDPOINT_KEY } from '../endpoints.js';
+import Requester from '../requester.js';
 
 export class AdminSteps {
   static async createUser() {
@@ -31,6 +31,7 @@ export class AdminSteps {
         config: ApiConfig.adminAuth,
       },
     );
+    expect(responseCreateUser.status).toBe(HttpStatusCode.Created);
     const username = userData.username;
     const password = userData.password;
     const responseLogin = await requester.request(ENDPOINT_KEY.LOGIN, {

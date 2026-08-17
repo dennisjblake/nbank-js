@@ -1,27 +1,28 @@
-import { HttpStatusCode } from 'axios';
 import {
   randomAlphabeticString,
   randomInvalidProfileName,
 } from '../../../seniorTests/generators/randomData.js';
-import { AdminSteps } from '../../../seniorTests/utils/steps/adminSteps.js';
-import { UserSteps } from '../../../seniorTests/utils/steps/userSteps.js';
 import { expect, test } from '../../fixtures/baseUi.js';
 import { BankAlert } from '../../pages/bankAlert.js';
+import BANK_STRINGS from '../../pages/bankStrings.js';
 import EditProfile from '../../pages/editProfilePage.js';
 import URL from '../../pages/url.js';
 import UserDashboard from '../../pages/userDashboard.js';
-import BANK_STRINGS from '../../pages/bankStrings.js';
 
 test.describe('UI Name Change Tests', () => {
   test('user can change name to correct value', async ({
     page,
-    authAsUser,
+    withUserSession,
+    authWithToken,
   }) => {
     // Create user and login
     const randomProfileName = randomAlphabeticString();
-    const { token } = await AdminSteps.createUserAndLogin();
 
-    await authAsUser({ token, goto: URL.DASHBOARD });
+    const [session] = await withUserSession(1);
+    const { steps, token } = session;
+
+    await authWithToken({ token, goto: URL.DASHBOARD });
+
     const userDashboard = new UserDashboard(page);
     await userDashboard.expectLoaded();
 
@@ -38,20 +39,21 @@ test.describe('UI Name Change Tests', () => {
     await userDashboard.expectWelcomeTextToContain(randomProfileName);
 
     // check the API result
-    const { status: customerProfileStatus, data: customerProfileResponse } =
-      await UserSteps.getProfileInfo(token);
-    expect(customerProfileStatus).toBe(HttpStatusCode.Ok);
+    const { data: customerProfileResponse } = await steps.getProfileInfo();
     expect(customerProfileResponse.name).toBe(randomProfileName);
   });
   test('user cannot change name to incorrect value', async ({
     page,
-    authAsUser,
+    authWithToken,
+    withUserSession,
   }) => {
     // Create user and login
     const randomProfileName = randomInvalidProfileName();
-    const { token } = await AdminSteps.createUserAndLogin();
+    const [session] = await withUserSession(1);
+    const { steps, token } = session;
 
-    await authAsUser({ token, goto: URL.DASHBOARD });
+    await authWithToken({ token, goto: URL.DASHBOARD });
+
     const userDashboard = new UserDashboard(page);
     await userDashboard.expectLoaded();
 
@@ -65,29 +67,27 @@ test.describe('UI Name Change Tests', () => {
     );
     await editProfile.navigateToUserDashboad();
     await userDashboard.expectLoaded();
-    await userDashboard.expectWelcomeTextToContain(BANK_STRINGS.DEFAULT_NONAME);
+    await userDashboard.expectWelcomeTextToContain(BANK_STRINGS.NONAME);
 
     // check the API result
-    const { status: customerProfileStatus, data: customerProfileResponse } =
-      await UserSteps.getProfileInfo(token);
-    expect(customerProfileStatus).toBe(HttpStatusCode.Ok);
-    expect(customerProfileResponse.name).toBe(null);
+    const { data: customerProfileResponse } = await steps.getProfileInfo();
+    expect(customerProfileResponse.name).toBeNull();
   });
   test('user cannot change name to the same value', async ({
     page,
-    authAsUser,
+    authWithToken,
+    withUserSession,
   }) => {
     // Create user and login
     const randomProfileName = randomAlphabeticString();
-    const { token } = await AdminSteps.createUserAndLogin();
+    const [session] = await withUserSession(1);
+    const { steps, token } = session;
 
     // Set initial name via API
-    const { data, status: profileNameChangeStatus } =
-      await UserSteps.changeProfileName(randomProfileName, token);
-    expect(profileNameChangeStatus).toBe(HttpStatusCode.Ok);
-    expect(data.customer.name).toBe(randomProfileName);
+    await steps.changeProfileName(randomProfileName);
 
-    await authAsUser({ token, goto: URL.DASHBOARD });
+    await authWithToken({ token, goto: URL.DASHBOARD });
+
     const userDashboard = new UserDashboard(page);
     await userDashboard.expectLoaded();
 
@@ -112,9 +112,7 @@ test.describe('UI Name Change Tests', () => {
     await userDashboard.expectWelcomeTextToContain(randomProfileName);
 
     // check the API result
-    const { status: customerProfileStatus, data: customerProfileResponse } =
-      await UserSteps.getProfileInfo(token);
-    expect(customerProfileStatus).toBe(HttpStatusCode.Ok);
+    const { data: customerProfileResponse } = await steps.getProfileInfo();
     expect(customerProfileResponse.name).toBe(randomProfileName);
   });
 });

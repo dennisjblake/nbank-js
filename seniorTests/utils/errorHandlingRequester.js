@@ -14,7 +14,6 @@ export default class ErrorHandlingRequester {
     } catch (error) {
       const actualStatus = error.response?.status;
       const responseData = error.response?.data;
-
       // Handle both string and object response formats
       const actualMessage =
         typeof responseData === 'string'
@@ -28,7 +27,10 @@ export default class ErrorHandlingRequester {
       }
 
       // Only check message if errorMessage is not null
-      if (expectedError.errorMessage !== null && !actualMessage?.includes(expectedError.errorMessage)) {
+      if (
+        expectedError.errorMessage !== null &&
+        !actualMessage?.includes(expectedError.errorMessage)
+      ) {
         throw new Error(
           `Expected message ${expectedError.errorMessage}, but got ${actualMessage}`,
         );

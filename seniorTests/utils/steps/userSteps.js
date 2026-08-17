@@ -1,16 +1,17 @@
 import { HttpStatusCode } from 'axios';
 import { expect } from 'playwright/test';
+import { assertThatModels } from '../../models/comparison/modelAssertions.js';
 import DepositRequest from '../../models/depositRequest.js';
 import ExpectedError from '../../models/expectedError.js';
 import LoginUserRequest from '../../models/loginUserRequest.js';
 import NameChangeRequest from '../../models/nameChangeRequest.js';
 import TransferRequest from '../../models/transferRequest.js';
-import ACCOUNT_VALUE from '../accountValue.js';
 import { ENDPOINT_KEY } from '../../utils/endpoints.js';
 import ErrorHandlingRequester from '../../utils/errorHandlingRequester.js';
+import ACCOUNT_VALUE from '../accountValue.js';
 import ApiConfig from '../apiConfig.js';
+import MESSAGE from '../message.js';
 import Requester from '../requester.js';
-import { assertThatModels } from '../../models/comparison/modelAssertions.js';
 
 export class UserSteps {
   constructor({ username, password, token } = {}) {
@@ -25,7 +26,7 @@ export class UserSteps {
     if (!this.username || !this.password) {
       throw new Error('UserSteps.ensureToken: need username/password or token');
     }
-    const { status, token } = await this.loginWithCreds(
+    const { status, token } = await UserSteps.loginWithCreds(
       this.username,
       this.password,
     );
@@ -40,6 +41,21 @@ export class UserSteps {
     const response = await requester.request(ENDPOINT_KEY.ACCOUNTS, {
       data: null,
       config: ApiConfig.getUserAuth(auth),
+    });
+    expect(response.status).toBe(HttpStatusCode.Created);
+    expect(response.data.accountNumber).toBeTruthy();
+    return {
+      responseData: response.data,
+      status: response.status,
+    };
+  }
+
+  async createAccount() {
+    const token = await this.ensureToken();
+    const requester = new Requester();
+    const response = await requester.request(ENDPOINT_KEY.ACCOUNTS, {
+      data: null,
+      config: ApiConfig.getUserAuth(token),
     });
     expect(response.status).toBe(HttpStatusCode.Created);
     expect(response.data.accountNumber).toBeTruthy();
@@ -99,30 +115,60 @@ export class UserSteps {
     };
   }
 
-  static async transfer(senderAccountId, receiverAccountId, amount, auth) {
+  async depositSmart(account, amount) {
+    const token = await this.ensureToken();
+    const limit = ACCOUNT_VALUE.DEPOSIT_MAX_VALUE;
+    const chunks = [];
+    let remaining = amount;
+    while (remaining > limit) {
+      chunks.push(limit);
+      remaining = Number((remaining - limit).toFixed(2));
+    }
+    chunks.push(remaining);
+
+    let lastResponse;
+    for (const chunkAmount of chunks) {
+      lastResponse = await UserSteps.deposit(account.id, chunkAmount, token);
+    }
+    expect(lastResponse.status).toBe(HttpStatusCode.Ok);
+    expect(lastResponse.data['balance']).toBe(amount);
+    await assertThatModels(account, lastResponse.data).match();
+    return {
+      data: lastResponse.data,
+      status: lastResponse.status,
+    };
+  }
+
+  async transfer(senderAccount, receiverAccount, amount) {
+    const token = await this.ensureToken();
     const requester = new Requester();
     const response = await requester.request(ENDPOINT_KEY.TRANSFER, {
       data: new TransferRequest({
-        senderAccountId: senderAccountId,
-        receiverAccountId: receiverAccountId,
+        senderAccountId: senderAccount.id,
+        receiverAccountId: receiverAccount.id,
         amount: amount,
       }),
-      config: ApiConfig.getUserAuth(auth),
+      config: ApiConfig.getUserAuth(token),
     });
+    expect(response.status).toBe(HttpStatusCode.Ok);
+    expect(response.data.senderAccountId).toBe(senderAccount.id);
+    expect(response.data.receiverAccountId).toBe(receiverAccount.id);
+    expect(response.data.amount).toBe(amount);
+    expect(response.data.message).toBe(MESSAGE.TRANSFER_SUCCESS_MESSAGE);
     return {
       data: response.data,
       status: response.status,
     };
   }
 
-  static async transferWithError(
+  async transferWithError(
     senderAccountId,
     receiverAccountId,
     amount,
     httpCode,
     errorMessage,
-    auth,
   ) {
+    const token = await this.ensureToken();
     const errorRequest = new ErrorHandlingRequester();
 
     const expectedError = new ExpectedError({
@@ -133,22 +179,29 @@ export class UserSteps {
 
     await errorRequest.requestExpectingError(ENDPOINT_KEY.TRANSFER, {
       data: new TransferRequest({
-        senderAccountId: senderAccountId,
-        receiverAccountId: receiverAccountId,
+        senderAccountId: senderAccountId.id,
+        receiverAccountId: receiverAccountId.id,
         amount: amount,
       }),
-      config: ApiConfig.getUserAuth(auth),
+      config: ApiConfig.getUserAuth(token),
       expectedError,
     });
   }
 
-  static async depositWithError(
+  async depositWithError({
     accountId,
     amount,
-    auth,
     httpCode,
     errorMessage = null,
-  ) {
+    token = null,
+  }) {
+    let flexConfig;
+    if (token === process.env.ADMIN_AUTH_TOKEN) {
+      flexConfig = ApiConfig.adminAuth;
+    } else {
+      token = await this.ensureToken();
+      flexConfig = ApiConfig.getUserAuth(token);
+    }
     const errorRequest = new ErrorHandlingRequester();
 
     const expectedError = new ExpectedError({
@@ -162,12 +215,13 @@ export class UserSteps {
         id: accountId,
         balance: amount,
       }),
-      config: ApiConfig.getUserAuth(auth),
+      config: flexConfig,
       expectedError,
     });
   }
 
-  static async changeProfileNameWithError(name, auth, httpCode, errorMessage) {
+  async changeProfileNameWithError(name, httpCode, errorMessage) {
+    const token = await this.ensureToken();
     const errorRequest = new ErrorHandlingRequester();
 
     const expectedError = new ExpectedError({
@@ -178,17 +232,19 @@ export class UserSteps {
 
     await errorRequest.requestExpectingError(ENDPOINT_KEY.CHANGE_PROFILE, {
       data: new NameChangeRequest({ name }),
-      config: ApiConfig.getUserAuth(auth),
+      config: ApiConfig.getUserAuth(token),
       expectedError,
     });
   }
 
-  static async getProfileInfo(auth) {
+  async getProfileInfo() {
+    const token = await this.ensureToken();
     const requester = new Requester();
     const response = await requester.request(ENDPOINT_KEY.GET_PROFILE, {
       data: null,
-      config: ApiConfig.getUserAuth(auth),
+      config: ApiConfig.getUserAuth(token),
     });
+    expect(response.status).toBe(HttpStatusCode.Ok);
     return {
       data: response.data,
       status: response.status,
@@ -222,29 +278,55 @@ export class UserSteps {
     };
   }
 
-  static async getAccountById(id, auth) {
-    const { status: customerAccountStatus, data: customerAccountsResponse } =
-      await UserSteps.getUserAccounts(auth);
-    return customerAccountsResponse.find((a) => a.id === id);
-  }
+  async getProfileInfo() {
+    const token = await this.ensureToken();
 
-  static async login(createdUserRequestData) {
-    const requester = new Requester();
-    const username = createdUserRequestData.username;
-    const password = createdUserRequestData.password;
-    const response = await requester.request(ENDPOINT_KEY.LOGIN, {
-      data: new LoginUserRequest({ username, password }),
+    const response = await this.requester.request(ENDPOINT_KEY.GET_PROFILE, {
+      config: ApiConfig.getUserAuth(token),
     });
+    expect(response.status).toBe(HttpStatusCode.Ok);
     return {
-      token: response.headers.authorization,
+      data: response.data,
       status: response.status,
     };
   }
+
+  async changeProfileName(name) {
+    const token = await this.ensureToken();
+
+    const response = await this.requester.request(ENDPOINT_KEY.CHANGE_PROFILE, {
+      data: new NameChangeRequest({ name }),
+      config: ApiConfig.getUserAuth(token),
+    });
+
+    expect(response.status).toBe(HttpStatusCode.Ok);
+    expect(response.data.customer.name).toBe(name);
+    expect(response.data.message).toBe(MESSAGE.PROFILE_UPDATED_SUCCESSFULLY);
+
+    return {
+      data: response.data,
+      status: response.status,
+    };
+  }
+
+  static async getAccountById(id, auth) {
+    const { data: customerAccountsResponse } =
+      await UserSteps.getUserAccounts(auth);
+    return customerAccountsResponse.find((a) => a.id === id);
+  }
+  async getAccountById(id) {
+    const token = await this.ensureToken();
+    const { data: customerAccountsResponse } =
+      await UserSteps.getUserAccounts(token);
+    return customerAccountsResponse.find((a) => a.id === id);
+  }
+
   static async loginWithCreds(username, password) {
     const requester = new Requester();
     const response = await requester.request(ENDPOINT_KEY.LOGIN, {
       data: new LoginUserRequest({ username, password }),
     });
+    expect(response.status).toBe(HttpStatusCode.Ok);
     return {
       token: response.headers.authorization,
       status: response.status,
